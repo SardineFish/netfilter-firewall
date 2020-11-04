@@ -1,0 +1,1 @@
+# Place an empty Makefile here to let 'make clean' works.
