@@ -6,12 +6,12 @@ export BASE_DIR := $(CURDIR)
 export TARGET_DIR := $(CURDIR)/target/kernel
 
 export RUST_TARGET_PLATFORM := x86_64-linux-kernel
-export RUST_FLAGS := 
+export RUSTFLAGS := 
 export RUST_MODE := debug
 export RUST_TARGET_DIR := $(CURDIR)/target/$(RUST_TARGET_PLATFORM)/$(RUST_MODE)
 
-export C_FILES := $(wildcard src/**/*.c)
-export RUST_FILES := $(wildcard src/**/*.rs)
+export C_FILES := $(shell find $(BASE_DIR)/src -name *.c)
+export RUST_FILES := $(shell find $(BASE_DIR)/src -name *.rs)
 
 
 all:
@@ -36,3 +36,6 @@ rmmod:
 install: insmod
 
 uninstall: rmmod
+
+rust:
+	cargo +nightly build --target x86_64-linux-kernel -Zbuild-std=core
