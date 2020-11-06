@@ -12,6 +12,7 @@ export RUST_TARGET_DIR := $(CURDIR)/target/$(RUST_TARGET_PLATFORM)/$(RUST_MODE)
 
 export C_FILES := $(shell find $(BASE_DIR)/src -name *.c)
 export RUST_FILES := $(shell find $(BASE_DIR)/src -name *.rs)
+export RURST_GEN_FILES := $(BASE_DIR)/build.rs $(BASE_DIR)/src/kernel_bindings/wrapper.h
 
 
 all:
@@ -23,9 +24,9 @@ all:
 clean:
 	make -C $(KDIR) M=$(TARGET_DIR) CC=$(CC) clean
 	make -C $(KDIR) M=$(BASE_DIR)/src CC=$(CC) clean
-	cargo clean
+	# cargo clean
 
-$(TARGET_DIR)/$(MODULE_NAME).ko: all
+# $(TARGET_DIR)/$(MODULE_NAME).ko: all
 
 insmod: $(TARGET_DIR)/$(MODULE_NAME).ko
 	insmod $(TARGET_DIR)/$(MODULE_NAME).ko

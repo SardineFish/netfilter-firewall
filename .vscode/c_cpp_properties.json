@@ -4,7 +4,14 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/usr/src/linux-headers-5.4.0-29-generic/include"
+                "/lib/modules/5.4.0-29-generic/build/arch/x86/include",
+                "/lib/modules/5.4.0-29-generic/build/arch/x86/include/generated",
+                "/lib/modules/5.4.0-29-generic/build/include",
+                "/lib/modules/5.4.0-29-generic/build/arch/x86/include/uapi",
+                "/lib/modules/5.4.0-29-generic/build/arch/x86/include/generated/uapi",
+                "/lib/modules/5.4.0-29-generic/build/include/uapi",
+                "/lib/modules/5.4.0-29-generic/build/include/generated/uapi",
+                "/lib/modules/5.4.0-29-generic/build/ubuntu/include",
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

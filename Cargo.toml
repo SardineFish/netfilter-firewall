@@ -17,3 +17,8 @@ panic = "abort"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+concat-idents = "1.0.0"
+proc-macros = { path = "proc-macros" }
+
+[build-dependencies]
+bindgen = "0.55.1"
