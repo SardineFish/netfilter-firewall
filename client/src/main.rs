@@ -4,7 +4,7 @@ extern crate netlink_packet_core;
 use netlink_sys::{Socket,SocketAddr};
 use netlink_packet_core as packet;
 
-const MSG_TYPE: u16 = 1;
+const NETLINK_PROTOCOL: i32 = 17;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 struct Message {
@@ -26,7 +26,7 @@ impl packet::NetlinkSerializable<Message> for Message {
         self.size
     }
     fn message_type(&self) -> u16 {
-        MSG_TYPE
+        NETLINK_PROTOCOL as u16
     }
     fn serialize(&self, buffer: &mut [u8]) {
         buffer.clone_from_slice(&self.data);
@@ -62,7 +62,7 @@ pub fn main() {
     netlink_msg.finalize();
     let addr = SocketAddr::new(0, 0);
 
-    let mut socket = Socket::new(16).unwrap();
+    let mut socket = Socket::new(NETLINK_PROTOCOL as isize).unwrap();
     let mut buf = vec![0; 8192];
     netlink_msg.serialize(&mut buf);
 

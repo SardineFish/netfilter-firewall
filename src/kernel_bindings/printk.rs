@@ -43,16 +43,16 @@ impl fmt::Write for LogWriter {
 
 #[macro_export]
 macro_rules! println {
-    () => {
+    () => ({
         $crate::printk::printk("\n\0");
         // $crate::printk("\n");
-    };
-    ($str: expr) => {
+    });
+    ($str: expr) => ({
         println!("{}", $str);
-    };
-    ($format: expr, $($arg: expr)*) => {
+    });
+    ($format: expr, $($arg: expr)*) => ({
         let mut writer = $crate::printk::LogWriter::new();
         let _ = core::fmt::write(&mut writer, format_args!(concat!($format, "\n"), $($arg)*)).unwrap();
         $crate::printk::printk(writer.to_str());
-    }
+    })
 }
