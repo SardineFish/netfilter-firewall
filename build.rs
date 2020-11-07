@@ -4,6 +4,26 @@ use std::env;
 
 const INCLUDE_FUNC: &[&str] = &[
     "printk",
+    "__netlink_kernel_create",
+    "skb_dequeue",
+    "nlmsg_data_non_inline",
+    "nlmsg_new_non_inline",
+    "netlink_cb",
+    "netlink_unicast",
+    "netlink_broadcast",
+    "netlink_kernel_release",
+    "nlmsg_total_size",
+    "kmalloc_wrapped",
+    "kcalloc_wrapped",
+    "kfree_wrapped"
+];
+const INCLUDE_TYPE: &[&str] = &[
+    "nlmsghdr",
+    "module",
+    "sk_buff",
+    "GFP"
+];
+const INCLUDE_VAL: &[&str] = &[
 ];
 
 fn path_join(base_path:&str, sub_path: &str) -> String {
@@ -48,7 +68,9 @@ pub fn include_abspath(includes: &str, kernel_dir: &str) -> Vec<String> {
 const KBUILD_ENV_ERROR: &str = "Must invoke from Kbuild.";
 
 pub fn main() {
-    println!("cargo:rerun-if-file-changed=src/kernel_bindings/wrapper.h");
+    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=src/kernel_bindings/wrapper.h");
+    println!("cargo:rerun-if-changed=src/kernel_bindings/helper.h");
 
 
     let kbuild_cflags_module = env::var("KBUILD_CFLAGS_MODULE").expect(KBUILD_ENV_ERROR);
@@ -75,6 +97,14 @@ pub fn main() {
 
     for func in INCLUDE_FUNC {
         binding = binding.whitelist_function(func);
+    }
+
+    for type_to_include in INCLUDE_TYPE {
+        binding = binding.whitelist_type(type_to_include);
+    }
+
+    for val in INCLUDE_VAL {
+        binding = binding.whitelist_var(val);
     }
     
     binding

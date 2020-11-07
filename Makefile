@@ -10,8 +10,8 @@ export RUSTFLAGS :=
 export RUST_MODE := debug
 export RUST_TARGET_DIR := $(CURDIR)/target/$(RUST_TARGET_PLATFORM)/$(RUST_MODE)
 
-export C_FILES := $(shell find $(BASE_DIR)/src -name *.c)
-export RUST_FILES := $(shell find $(BASE_DIR)/src -name *.rs)
+export C_FILES := $(shell find $(BASE_DIR)/src -name "*.c")
+export RUST_FILES := $(shell find $(BASE_DIR)/src -name "*.rs")
 export RURST_GEN_FILES := $(BASE_DIR)/build.rs $(BASE_DIR)/src/kernel_bindings/wrapper.h
 
 

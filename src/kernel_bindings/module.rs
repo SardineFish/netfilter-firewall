@@ -1,7 +1,16 @@
+use super::bindings;
 
 extern crate concat_idents;
 extern crate proc_macros;
 
+extern "C" {
+    #[no_mangle]
+    static mut __this_module: bindings::module ;
+}
+
+pub fn this_module() -> *mut bindings::module {
+    unsafe { return &mut __this_module; }
+}
 
 #[macro_export]
 macro_rules! module_init {

@@ -1,9 +1,7 @@
 mod c_types;
-mod module;
-mod bindings;
 
-pub fn printk(str: &str) {
-    unsafe {
-        bindings::printk(str.as_bytes().as_ptr());
-    }
-}
+pub mod module;
+pub mod bindings;
+pub mod netlink;
+pub mod memory;
+pub mod printk;
