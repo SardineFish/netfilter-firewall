@@ -4,6 +4,7 @@
 
 pub mod serialize;
 pub mod deserialize;
+pub mod packets;
 
 #[cfg(test)]
 mod test;
@@ -28,19 +29,16 @@ pub struct NetlinkMessage<T> {
     pub header: NetlinkHeader,
     pub payload: T,
 }
-
-#[cfg(feature = "no_std")]
-mod panic_handler {
-
-#[panic_handler]
-fn my_panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
+impl<T> NetlinkMessage<T> where T : Serialize {
+    pub fn pack(&self, buffer: &mut [u8]) -> usize {
+        serialize(&self.payload, buffer)
+    } 
 }
-
+impl<T> NetlinkMessage<T> where T : Deserialize<T> {
+    pub fn from(header: NetlinkHeader, payload_buffer: &[u8]) -> Self {
+        NetlinkMessage {
+            header: header,
+            payload: deserialize::<T>(payload_buffer).unwrap()
+        }
+    }
 }
-
-// #[cfg(feature = "default")]
-// #[lang = "eh_personality"]
-// extern "C" fn eh_personality() {}
-// #[lang = "eh_personality"]
-// fn eh_personality() {}
