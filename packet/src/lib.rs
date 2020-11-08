@@ -21,24 +21,6 @@ pub struct NetlinkMessage<T> {
     pub payload: T,
 }
 
-
-// impl<T: Serialize> Serialize for NetlinkMessage<T> {
-//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-//     where
-//         S: Serializer,
-//     {
-//         self.payload.serialize(serializer)
-//     }
-// }
-
-// impl<'de, T: Deserialize<'de>> Deserialize<'de> for NetlinkMessage<T> {
-//     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-//     where
-//             D: Deserializer<'de> {
-//         deserializer.deserialize_
-//     }
-// }
-
 #[panic_handler]
 fn my_panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}

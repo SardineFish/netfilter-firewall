@@ -1,0 +1,146 @@
+
+extern crate concat_idents;
+
+use core::cmp;
+use core::mem::size_of;
+
+pub trait DataReader<'a> {
+    fn read(&self, size: usize) -> &'a [u8];
+}
+
+pub struct BinaryReader<'b> {
+    buffer: &'b [u8],
+    pos: usize,
+}
+
+impl<'b> BinaryReader<'b> {
+    pub fn from(buffer: &'b [u8]) -> Self {
+        BinaryReader {
+            buffer: buffer,
+            pos: 0,
+        }
+    }
+}
+
+impl<'b> DataReader<'b> for BinaryReader<'b> {
+    fn read(&self, size: usize) -> &'b [u8] {
+        let read_size = cmp::min(size, self.buffer.len() - self.pos);
+        &self.buffer[self.pos..read_size]
+    }
+}
+
+type DeserializeResult<T> = Result<T, DeserializeError>;
+pub trait Deserialize<T> {
+    fn deserialize<'a>(deserializer: &mut Deserializer<'a>) -> DeserializeResult<T>;
+}
+
+#[derive(Debug)]
+pub enum DeserializeError {
+    InvalidSize,
+    AllocationFaild,
+}
+
+pub struct Deserializer<'a> {
+    reader: &'a mut DataReader<'a>,
+}
+
+macro_rules! impl_deserializer_fn {
+    () => {};
+    ($type: ident $(, $others: ident)*) => {
+        concat_idents::concat_idents!(fn_name = deserialize_, $type, {
+            pub fn fn_name(&mut self) -> DeserializeResult<$type> {
+                <$type as Deserialize<$type>>::deserialize(self)
+            }
+        });
+        impl_deserializer_fn!($($others), *);
+    };
+}
+
+macro_rules! impl_deserialize {
+    () => {};
+    ($type: ident $(, $others: ident)*) => {
+        impl Deserialize<$type> for $type {
+
+            fn deserialize<'a>(
+                deserializer: &mut Deserializer<'a>,
+            ) -> DeserializeResult<$type> {
+                let buffer = deserializer.reader.read(size_of::<$type>());
+                if buffer.len() < size_of::<$type>() {
+                    return Err(DeserializeError::InvalidSize);
+                } else {
+                    unsafe {
+                        let ptr = buffer.as_ptr() as *const $type;
+                        return Ok(*ptr);
+                    }
+                }
+            }
+
+        }
+
+        impl_deserialize!($($others), *);
+
+    };
+}
+
+impl_deserialize!(bool, i8, i16, i32, i64, u8, u16, u32, u64, isize, usize, f32, f64);
+
+impl<'a> Deserializer<'a> {
+    pub fn new(reader: &'a mut DataReader<'a>) -> Self {
+        Deserializer {
+            reader: reader
+        }
+    }
+    impl_deserializer_fn!(bool, i8, i16, i32, i64, u8, u16, u32, u64, isize, usize, f32, f64);
+    pub fn deserialize<T: Deserialize<T>>(&mut self) -> DeserializeResult<T> {
+        <T as Deserialize<T>>::deserialize(self)
+    }
+    pub fn deserialize_array<'b, T>(&mut self, allocator: fn(usize)-> Option<&'b mut [T]>) -> DeserializeResult<&'b mut [T]>
+    where T : Deserialize<T> {
+        let count = self.deserialize_usize().unwrap();
+        let arr = allocator(count);
+
+        match arr {
+            None => return Err(DeserializeError::AllocationFaild),
+            Some(a) => {
+                for i in 0..count {
+                    a[i] = self.deserialize::<T>()?
+                }
+            
+                return Ok(a);
+            }
+        }
+    }
+    pub fn deserialize_u8_array(&mut self) -> DeserializeResult<&'a [u8]> {
+        let size = self.deserialize_usize()?;
+        let buffer = self.reader.read(size);
+        if buffer.len() != size {
+            return Err(DeserializeError::InvalidSize);
+        }
+        return Ok(buffer);
+    }
+    pub fn deserialize_str<'b, T>(&mut self, allocator: fn(usize) -> Option<&'b mut str>) -> DeserializeResult<&'b mut str> {
+        let buffer = self.deserialize_u8_array()?;
+        match allocator(buffer.len()) {
+            Some(string) if string.len() >= buffer.len() => {
+                unsafe {
+                    string.as_bytes_mut()[..buffer.len()].copy_from_slice(buffer);
+                }
+                return Ok(string);
+            },
+            _ => Err(DeserializeError::AllocationFaild),
+        }
+    }
+}
+
+// impl Deserialize<i32> for i32 {
+//     fn deserialize<'a>(deserializer: &mut Deserializer<'a>) -> DeserializeResult<i32> {
+//         let buffer = deserializer.reader.read(4);
+//         5
+//     }
+// }
+
+pub fn deserialize<T: Deserialize<T>>(buffer: &[u8]) -> DeserializeResult<T> {
+    let mut reader = BinaryReader::from(buffer);
+    let mut deserializer = Deserializer::new(&mut reader);
+    deserializer.deserialize()
+}

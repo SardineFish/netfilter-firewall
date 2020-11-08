@@ -35,7 +35,7 @@ pub struct Serializer<'w> {
 }
 
 impl<'w> Serializer<'w> {
-    pub fn from<T: DataWriter<'w>>(writer: &'w mut T) -> Serializer<'w> {
+    pub fn new<T: DataWriter<'w>>(writer: &'w mut T) -> Serializer<'w> {
         Serializer {
             writer: writer,
             length: 0,
@@ -46,8 +46,6 @@ impl<'w> Serializer<'w> {
 pub trait Serialize {
     fn serialize<'s>(&self, serializer: Serializer<'s>) -> Serializer<'s>;
 }
-
-trait SerializeInternal {}
 
 impl<'b> Serializer<'b> {
     pub fn serialize<T: Serialize>(self, data: &T) -> Self {
@@ -92,7 +90,7 @@ where
     T: Serialize,
 {
     let mut writer = BinaryWriter::from(buffer);
-    let serializer = Serializer::from(&mut writer);
-    
+    let serializer = Serializer::new(&mut writer);
+
     target.serialize(serializer).length
 }
