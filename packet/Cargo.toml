@@ -5,14 +5,22 @@ authors = ["SardineFish <sardine@live.cn>"]
 edition = "2018"
 
 [lib]
-crate-type = ["staticlib"]
+crate-type = [ "staticlib", "rlib" ]
 
 [dependencies]
 concat-idents = "1.0.0"
 
+[features]
+default = []
+no_panic_handler = []
+no_std = []
 
 [profile.dev]
 panic = "abort"
 
 [profile.release]
+panic = "abort"
+
+
+[profile.test]
 panic = "abort"

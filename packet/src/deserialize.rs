@@ -5,7 +5,7 @@ use core::cmp;
 use core::mem::size_of;
 
 pub trait DataReader<'a> {
-    fn read(&self, size: usize) -> &'a [u8];
+    fn read(&mut self, size: usize) -> &'a [u8];
 }
 
 pub struct BinaryReader<'b> {
@@ -23,13 +23,15 @@ impl<'b> BinaryReader<'b> {
 }
 
 impl<'b> DataReader<'b> for BinaryReader<'b> {
-    fn read(&self, size: usize) -> &'b [u8] {
+    fn read(&mut self, size: usize) -> &'b [u8] {
         let read_size = cmp::min(size, self.buffer.len() - self.pos);
-        &self.buffer[self.pos..read_size]
+        let data = &self.buffer[self.pos..self.pos + read_size];
+        self.pos += read_size;
+        data
     }
 }
 
-type DeserializeResult<T> = Result<T, DeserializeError>;
+pub type DeserializeResult<T> = Result<T, DeserializeError>;
 pub trait Deserialize<T> {
     fn deserialize<'a>(deserializer: &mut Deserializer<'a>) -> DeserializeResult<T>;
 }
@@ -118,14 +120,14 @@ impl<'a> Deserializer<'a> {
         }
         return Ok(buffer);
     }
-    pub fn deserialize_str<'b, T>(&mut self, allocator: fn(usize) -> Option<&'b mut str>) -> DeserializeResult<&'b mut str> {
+    pub fn deserialize_str<'b>(&mut self, allocator: fn(usize) -> Option<&'b mut [u8]>) -> DeserializeResult<&'b mut str> {
         let buffer = self.deserialize_u8_array()?;
         match allocator(buffer.len()) {
             Some(string) if string.len() >= buffer.len() => {
                 unsafe {
-                    string.as_bytes_mut()[..buffer.len()].copy_from_slice(buffer);
+                    string[..buffer.len()].copy_from_slice(buffer);
                 }
-                return Ok(string);
+                return Ok(core::str::from_utf8_mut(string).unwrap());
             },
             _ => Err(DeserializeError::AllocationFaild),
         }

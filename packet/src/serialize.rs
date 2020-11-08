@@ -22,7 +22,7 @@ impl<'p> BinaryWriter<'p> {
 
 impl<'p> DataWriter<'p> for BinaryWriter<'p> {
     fn write(&mut self, data: &[u8]) -> usize {
-        let write_size = cmp::min(self.buffer.len(), self.pos + data.len());
+        let write_size = cmp::min(self.buffer.len() - self.pos, data.len());
         self.buffer[self.pos..self.pos + write_size].copy_from_slice(&data[..write_size]);
         self.pos += write_size;
         write_size
@@ -71,7 +71,7 @@ macro_rules! impl_serialize {
     }
 }
 
-impl_serialize!(bool, i8, i16, i32, i64, u8, u16, u32, u64, usize, isize);
+impl_serialize!(bool, i8, i16, i32, i64, u8, u16, u32, u64, usize, isize, f32, f64);
 
 impl<T: Serialize> Serialize for &[T]{
     fn serialize<'s>(&self, serializer: Serializer<'s>) -> Serializer<'s> {
@@ -82,6 +82,13 @@ impl<T: Serialize> Serialize for &[T]{
         }
 
         serializer
+    }
+}
+
+impl Serialize for &str {
+    fn serialize<'s>(&self, serializer: Serializer<'s>) -> Serializer<'s> {
+        let slice = self.as_bytes();
+        serializer.serialize(&slice)
     }
 }
 
