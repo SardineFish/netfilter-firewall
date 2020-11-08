@@ -1,0 +1,17 @@
+[package]
+name = "packet"
+version = "0.1.0"
+authors = ["SardineFish <sardine@live.cn>"]
+edition = "2018"
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
