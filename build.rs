@@ -15,15 +15,31 @@ const INCLUDE_FUNC: &[&str] = &[
     "nlmsg_total_size",
     "kmalloc_wrapped",
     "kcalloc_wrapped",
-    "kfree_wrapped"
+    "kfree_wrapped",
+    "nf_register_net_hook",
+    "nf_unregister_net_hook",
+    "nf_ip_hook_priorities",
+    "ip_hdr_wrapped",
+    "tcp_hdr_wrapped"
 ];
 const INCLUDE_TYPE: &[&str] = &[
     "nlmsghdr",
     "module",
     "sk_buff",
-    "GFP"
+    "GFP",
+    "ProtocolFamily",
+    "nf_inet_hooks",
+    "nf_ip_hook_priorities",
+    "iphdr",
+    "tcphdr",
+    "udphdr",
+    "IpProtocol"
 ];
 const INCLUDE_VAL: &[&str] = &[
+];
+
+const OPAQUE_TYPE: &[&str] = &[
+    "xregs_state"
 ];
 
 fn path_join(base_path:&str, sub_path: &str) -> String {
@@ -93,7 +109,9 @@ pub fn main() {
         .clang_arg(format!("-I{}", override_include))
         .clang_args(kbuild_cflags_module.split_whitespace())
         .clang_args(kbuild_cppflags.split_whitespace())
-        .clang_args(include_abspath(&linux_include, &kernel_dir));
+        .clang_args(include_abspath(&linux_include, &kernel_dir))
+        .clang_arg("-DKBUILD_BASENAME='kmod.mod'")
+        .clang_arg("-DKBUILD_MODNAME='kmod'");
 
     for func in INCLUDE_FUNC {
         binding = binding.whitelist_function(func);
@@ -105,6 +123,10 @@ pub fn main() {
 
     for val in INCLUDE_VAL {
         binding = binding.whitelist_var(val);
+    }
+
+    for opaque_type in OPAQUE_TYPE {
+        binding = binding.opaque_type(opaque_type);
     }
     
     binding

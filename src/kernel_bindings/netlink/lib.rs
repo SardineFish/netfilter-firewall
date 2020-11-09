@@ -4,6 +4,7 @@ use super::extern_bindings;
 use super::msg::{ NetLinkMessge, NetLinkAddr, NetLinkHeader };
 use crate::kernel_bindings::memory;
 use super::super::printk;
+use crate::kernel_bindings::net;
 
 pub struct NetLinkBuilder{
     callback: Option<fn(msg: &NetLinkMessge)>,
@@ -50,7 +51,7 @@ impl NetLinkBuilder {
         unsafe {
             RUST_INPUT_CALLBACK = self.callback;
             self.cfg.input = Some(input_callback);
-            let socket = extern_bindings::netlink_kernel_create(&mut extern_bindings::init_net, self.unit, &mut self.cfg);
+            let socket = extern_bindings::netlink_kernel_create(&mut net::init_net, self.unit, &mut self.cfg);
 
             if socket == core::ptr::null_mut() {
                 return None;

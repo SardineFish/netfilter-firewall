@@ -5,7 +5,10 @@ mod kernel_bindings;
 use kernel_bindings::bindings;
 use kernel_bindings::netlink;
 use kernel_bindings::printk;
+use kernel_bindings::net;
+use kernel_bindings::netfilter;
 
+static mut NETFILTER_HOOK: Option<netfilter::NetfilterHook> = None;
 static mut socket: Option<netlink::NetLinkSock> = None;
 const NETLINK_PROTOCOL: i32 = 17;
 
@@ -25,6 +28,17 @@ fn init() -> i32 {
                 .unit(NETLINK_PROTOCOL)
                 .callback(msg_callback)
                 .create();
+
+            NETFILTER_HOOK = Some(netfilter::NetfilterHook::new());
+            if let Some(hook) = &mut NETFILTER_HOOK {
+                hook.hook_func(packet_callback)
+                    .hook(netfilter::HookPoint::PreRouting)
+                    .register();
+            }
+
+            // hook = Some(netfilter::NetfilterHook::new()
+            //     .hook_func(packet_callback)
+            //     .register());
         }
         match socket {
             None => println!("Failed to create netlink socket."),
@@ -34,6 +48,26 @@ fn init() -> i32 {
     }
 
     return 0;
+}
+
+fn packet_callback(packet: net::IPv4Packet) -> netfilter::HookResponse {
+
+    if(packet.header.protocol == bindings::IpProtocol_TCP as u8) {
+        if let Some(tcp) = net::TcpPacket::from(&packet) {
+            let tcp = tcp as net::TcpPacket;
+            println!("TCP {} -> {}", tcp.header.source, tcp.header.dest);
+        }
+        // println!("TCP {} -> {} with total size {}", packet.header.saddr, packet.header.daddr, packet.header.tot_len);
+    }
+    else if(packet.header.protocol == bindings::IpProtocol_UDP as u8) {
+        if let Some(udp) = net::UdpPacket::from(&packet) {
+            // let udp = udp as net::UdpPacket;
+            println!("UDP {} -> {}", udp.header.source, udp.header.dest);
+        }
+        // println!("UDP {} -> {} with total size {}", packet.header.saddr, packet.header.daddr, packet.header.tot_len);
+    }
+
+    return netfilter::HookResponse::Accept;
 }
 
 fn msg_callback(msg: &kernel_bindings::netlink::NetLinkMessge) {
@@ -49,15 +83,22 @@ extern "C" fn input(buf: *mut bindings::sk_buff) {
 
 extern "C" {
     pub fn extern_code();
+    pub fn extern_cleanup();
 }
 
 fn exit() {
     println!("exit module");
     unsafe {
+        // extern_cleanup();
         match &socket {
             Some(s) => s.release(),
             _ => (),
         };
+        
+        match &NETFILTER_HOOK {
+            Some(h) => {h.unregister();},
+            _ => (),
+        }
     }
 }
 

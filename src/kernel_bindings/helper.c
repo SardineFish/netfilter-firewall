@@ -1,8 +1,13 @@
+#include <linux/netfilter.h>
+#include <linux/netfilter_ipv4.h>
 #include <linux/netlink.h>
 #include <linux/skbuff.h>
 #include <linux/slab.h>
-#include <net/netlink.h>
 #include <net/net_namespace.h>
+#include <net/netlink.h>
+#include <linux/ip.h>
+#include <linux/tcp.h>
+#include <linux/udp.h>
 // #include "./helper.h"
 
 void* nlmsg_data_non_inline(struct nlmsghdr* nlh)
@@ -20,31 +25,68 @@ struct sk_buff* nlmsg_new_non_inline(size_t payload, gfp_t flags)
     return kmalloc(nlmsg_total_size(payload), flags);
 }
 
-void* kmalloc_wrapped(size_t size, gfp_t flags) 
+void* kmalloc_wrapped(size_t size, gfp_t flags)
 {
     return kmalloc(size, flags);
 }
 
-void* kcalloc_wrapped(size_t n, size_t size, gfp_t flags) 
+void* kcalloc_wrapped(size_t n, size_t size, gfp_t flags)
 {
     return kcalloc(n, size, flags);
 }
 
-void kfree_wrapped(const void* ptr) 
+void kfree_wrapped(const void* ptr)
 {
     kfree(ptr);
 }
 
-static void test_nl_receive_message(struct sk_buff *skb) {
+static void test_nl_receive_message(struct sk_buff* skb)
+{
     printk("Receive pakcet in C.\n");
 }
 
+struct iphdr* ip_hdr_wrapped(const struct sk_buff* skb)
+{
+    return ip_hdr(skb);
+}
+
+struct tcphdr* tcp_hdr_wrapped(const struct sk_buff* skb)
+{
+    return tcp_hdr(skb);
+}
+
+unsigned int hook_func(void* priv, struct sk_buff* skb, const struct nf_hook_state* state)
+{
+    register struct iphdr* ip_header = ip_hdr(skb);
+    if(ip_header->protocol == IPPROTO_TCP) {
+        register struct tcphdr* tcp_header = tcp_hdr(skb);
+        printk("TCP %d -> %d\n", tcp_header->source, tcp_header->dest);
+    }
+    return NF_ACCEPT;
+}
+
+
+
+
 extern void extern_code(void)
 {
-    struct netlink_kernel_cfg config = {
-        .input = test_nl_receive_message,
-    };
-    struct sock *socket = netlink_kernel_create(&init_net, 25, &config);
-    if(!socket)
-        printk("Failed to create netlink socket\n");
+    struct nf_hook_ops nfho;
+    nfho.hook = hook_func;
+    nfho.pf = PF_INET;
+    nfho.hooknum = NF_INET_PRE_ROUTING;
+    nfho.priority = NF_IP_PRI_FIRST;
+
+    nf_register_net_hook(&init_net, &nfho);
+    printk("registered net hook\n");
+}
+
+extern void extern_cleanup(void)
+{
+    struct nf_hook_ops nfho;
+    nfho.hook = hook_func;
+    nfho.pf = PF_INET;
+    nfho.hooknum = NF_INET_PRE_ROUTING;
+    nfho.priority = NF_IP_PRI_FIRST;
+    nf_unregister_net_hook(&init_net, &nfho);
+    printk("unregister net hook\n");
 }
