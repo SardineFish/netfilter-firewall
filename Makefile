@@ -6,7 +6,7 @@ export BASE_DIR := $(CURDIR)
 export TARGET_DIR := $(CURDIR)/target/kernel
 
 export RUST_TARGET_PLATFORM := x86_64-linux-kernel
-export RUSTFLAGS := 
+export RUSTFLAGS :=
 export RUST_MODE := debug
 export RUST_TARGET_DIR := $(CURDIR)/target/$(RUST_TARGET_PLATFORM)/$(RUST_MODE)
 

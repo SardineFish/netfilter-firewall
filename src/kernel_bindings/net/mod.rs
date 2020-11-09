@@ -49,9 +49,11 @@ where
     pub fn from(header_ptr: *mut T) -> Self {
         unsafe {
             let payload_ptr = (header_ptr as usize + (*header_ptr).header_size()) as *mut u8;
+            use crate::println;
+            println!("payload size {}", (*header_ptr).payload_size());
             NetPacket {
                 header: *header_ptr,
-                payload: core::slice::from_raw_parts_mut(payload_ptr, (*header_ptr).payload_size()),
+                payload: core::slice::from_raw_parts_mut(payload_ptr, 1),
             }
         }
     }

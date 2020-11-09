@@ -26,4 +26,3 @@ pub mod ip_protocol {
     pub const MPLS: u8 = 137;
     pub const RAW: u8 = 255;
 }
-pub type IpProtocol = u8;

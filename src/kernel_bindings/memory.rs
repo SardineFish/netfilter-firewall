@@ -1,6 +1,10 @@
 use super::bindings;
 use super::c_types;
 
+use crate::println;
+
+use crate::alloc::alloc;
+
 pub struct RawData {
     ptr: *mut u8,
     size: usize,
@@ -44,3 +48,21 @@ impl RawData {
         self.size
     }
 }
+
+pub struct KernelAlloc {
+
+}
+
+unsafe impl alloc::GlobalAlloc for KernelAlloc {
+    unsafe fn alloc(&self, layout: alloc::Layout) -> *mut u8 {
+        let ptr = bindings::kmalloc_wrapped(layout.size(), bindings::GFP_KERNEL);
+        println!("Alloc {} bytes aligned {} in kernel at {:#x}", layout.size(), layout.align(), ptr as usize);
+        ptr as *mut u8
+    }
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: alloc::Layout) {
+        println!("Dealloc {} bytes aligned {} in kernel", layout.size(), layout.align());
+        bindings::kfree_wrapped(ptr as *const c_types::c_void);
+    }
+}
+
+unsafe impl Sync for KernelAlloc{}

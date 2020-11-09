@@ -8,7 +8,8 @@ edition = "2018"
 
 [dependencies]
 netlink-sys = { git = "https://github.com/little-dude/netlink" }
-netlink-packet-core = { git = "https://github.com/little-dude/netlink" }
+netlink-packet-core = "0.2.1"
+packet = { path = "../packet" }
 
 [build-dependencies]
 cc = "1.0.61"

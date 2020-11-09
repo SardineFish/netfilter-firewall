@@ -12,8 +12,11 @@ extern "C" fn netfilter_hook_func(
             match hook_func_rust {
                 Some(func) => {
                     let header = bindings::ip_hdr_wrapped(skb);
-                    let packet = net::IPv4Packet::from(header);
-                    func(packet) as c_types::c_uint
+                    use crate::println;
+                    println!("header at {}", (*header).tot_len);
+                    // let packet = net::IPv4Packet::from(header);
+                    // func(packet) as c_types::c_uint
+                    HookResponse::Accept as c_types::c_uint
                 },
                 _=> HookResponse::Accept as c_types::c_uint
             }
@@ -34,6 +37,7 @@ pub struct NetfilterHook {
     hook_ops: bindings::nf_hook_ops,
 }
 
+#[allow(dead_code)]
 pub mod protocol_family {
     pub const UNSPEC : u8 = 0;
     pub const LOCAL : u8 = 1;
@@ -87,7 +91,7 @@ pub mod protocol_family {
 }
 
 
-
+#[allow(dead_code)]
 pub enum HookResponse {
     Drop = 0,
     Accept = 1,
@@ -97,6 +101,7 @@ pub enum HookResponse {
     Stop = 5,
 }
 
+#[allow(dead_code)]
 pub enum HookPoint {
     PreRouting = bindings::nf_inet_hooks_NF_INET_PRE_ROUTING as isize,
     LocalIn = bindings::nf_inet_hooks_NF_INET_LOCAL_IN as isize,

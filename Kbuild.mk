@@ -14,4 +14,4 @@ $(M)/${rust-obj}: $(RUST_TARGET_DIR)/${rust-target}
 
 $(RUST_TARGET_DIR)/${rust-target}: ${RUST_FILES} $(RURST_GEN_FILES)
 	cd $(BASE_DIR) && \
-	cargo +nightly build --target x86_64-linux-kernel -Zbuild-std=core
+	cargo +nightly build --target x86_64-linux-kernel -Zbuild-std=core,alloc

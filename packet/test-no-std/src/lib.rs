@@ -30,15 +30,15 @@ static STUPID_HEAP: ExternAlloc = ExternAlloc {};
 #[lang = "eh_personality"]
 extern "C" fn eh_personality() {}
 
-// #[panic_handler]
-// fn my_panic(_info: &core::panic::PanicInfo) -> ! {
-//     loop {}
-// }
+#[panic_handler]
+fn my_panic(_info: &core::panic::PanicInfo) -> ! {
+    loop {}
+}
 
-// #[alloc_error_handler]
-// fn alloc_error(_layout: alloc::alloc::Layout) -> ! {
-//     loop {}
-// }
+#[alloc_error_handler]
+fn alloc_error(_layout: alloc::alloc::Layout) -> ! {
+    loop {}
+}
 
 extern "C" {
     fn extern_alloc(size: usize) -> *mut u8;

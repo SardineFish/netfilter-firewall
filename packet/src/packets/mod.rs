@@ -4,7 +4,7 @@ use crate::serialize::{Serialize, Serializer};
 #[cfg(feature = "no_std")]
 use alloc::vec::Vec;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 pub struct CapturedPacket {
     pub source_ip: u32,
     pub dest_ip: u32,
@@ -14,7 +14,7 @@ pub struct CapturedPacket {
     pub payload: Vec<u8>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 pub struct FilterRule {
     pub source_ip: u32,
     pub dest_ip: u32,

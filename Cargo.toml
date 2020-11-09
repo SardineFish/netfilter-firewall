@@ -19,6 +19,7 @@ panic = "abort"
 [dependencies]
 concat-idents = "1.0.0"
 proc-macros = { path = "proc-macros" }
+packet = { path = "./packet", default-features = false, features = ["no_std"] }
 
 [build-dependencies]
 bindgen = "0.55.1"

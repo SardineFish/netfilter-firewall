@@ -91248,6 +91248,16 @@ extern "C" {
     pub fn nlmsg_new_non_inline(payload: usize, flags: gfp_t) -> *mut sk_buff;
 }
 extern "C" {
+    pub fn nlmsg_put_wrapped(
+        skb: *mut sk_buff,
+        portid: u32_,
+        seq: u32_,
+        type_: u16_,
+        len: u32_,
+        flags: u16_,
+    ) -> *mut nlmsghdr;
+}
+extern "C" {
     pub fn kmalloc_wrapped(size: usize, flags: gfp_t) -> *mut c_types::c_void;
 }
 extern "C" {

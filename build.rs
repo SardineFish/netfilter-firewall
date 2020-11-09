@@ -13,6 +13,7 @@ const INCLUDE_FUNC: &[&str] = &[
     "netlink_broadcast",
     "netlink_kernel_release",
     "nlmsg_total_size",
+    "nlmsg_put_wrapped",
     "kmalloc_wrapped",
     "kcalloc_wrapped",
     "kfree_wrapped",

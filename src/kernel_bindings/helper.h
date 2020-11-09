@@ -7,6 +7,8 @@ struct netlink_skb_parms netlink_cb(struct sk_buff* skb);
 
 struct sk_buff* nlmsg_new_non_inline(size_t payload, gfp_t flags);
 
+struct nlmsghdr* nlmsg_put_wrapped(struct sk_buff* skb, u32 portid, u32 seq, u16 type, u32 len, u16 flags);
+
 void* kmalloc_wrapped(size_t size, gfp_t flags);
 
 void* kcalloc_wrapped(size_t n, size_t size, gfp_t flags);

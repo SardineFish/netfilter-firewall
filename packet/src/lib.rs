@@ -54,15 +54,15 @@ where
 
 #[cfg(feature = "no_std")]
 mod no_std {
-    #[panic_handler]
-    fn my_panic(_info: &core::panic::PanicInfo) -> ! {
-        loop {}
-    }
+    // #[panic_handler]
+    // fn my_panic(_info: &core::panic::PanicInfo) -> ! {
+    //     loop {}
+    // }
 
-    #[alloc_error_handler]
-    fn alloc_error(_layout: alloc::alloc::Layout) -> ! {
-        loop {}
-    }
+    // #[alloc_error_handler]
+    // fn alloc_error(_layout: alloc::alloc::Layout) -> ! {
+    //     loop {}
+    // }
 
     struct GlobalAllocator {
         allocator: Option<&'static alloc::alloc::GlobalAlloc>,
@@ -87,14 +87,14 @@ mod no_std {
     unsafe impl Sync for GlobalAllocator {
     }
 
-    #[global_allocator]
-    static mut GLOBAL_ALLOCATOR: GlobalAllocator = GlobalAllocator{
-        allocator: None
-    };
+    // #[global_allocator]
+    // static mut GLOBAL_ALLOCATOR: GlobalAllocator = GlobalAllocator{
+    //     allocator: None
+    // };
 
-    pub fn set_global_allocator(allocator: &'static alloc::alloc::GlobalAlloc) {
-        unsafe {
-            GLOBAL_ALLOCATOR.allocator = Some(allocator);
-        }
-    }
+    // pub fn set_global_allocator(allocator: &'static alloc::alloc::GlobalAlloc) {
+    //     unsafe {
+    //         GLOBAL_ALLOCATOR.allocator = Some(allocator);
+    //     }
+    // }
 }

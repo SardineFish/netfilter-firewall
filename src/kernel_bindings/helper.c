@@ -20,9 +20,18 @@ struct netlink_skb_parms netlink_cb(struct sk_buff* skb)
     return NETLINK_CB(skb);
 }
 
+struct nlmsghdr* nlmsg_put_wrapped(struct sk_buff* skb, u32 portid, u32 seq, u16 type, u32 len, u16 flags)
+{
+    return nlmsg_put(skb, portid, seq, type, len, flags);
+}
+
 struct sk_buff* nlmsg_new_non_inline(size_t payload, gfp_t flags)
 {
-    return kmalloc(nlmsg_total_size(payload), flags);
+    // printk("payload %d \n", payload);
+    struct sk_buff* skb = nlmsg_new(payload, flags);
+    // kmalloc(nlmsg_total_size(payload), flags);
+    // printk("skb_tailroom %d\n", skb_tailroom(skb));
+    return skb;
 }
 
 void* kmalloc_wrapped(size_t size, gfp_t flags)
