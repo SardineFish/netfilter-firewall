@@ -120,6 +120,16 @@ impl<'a> Deserializer<'a> {
         }
         return Ok(buffer);
     }
+    pub fn deserialize_u8_array_alloc<'b>(&mut self, allocator: fn(usize) -> Option<&'b mut [u8]>) -> DeserializeResult<&'b mut [u8]> {
+        let buffer = self.deserialize_u8_array()?;
+        match allocator(buffer.len()) {
+            Some(buf) if buf.len() >= buffer.len() => {
+                buf[..buffer.len()].copy_from_slice(buffer);
+                Ok(buf)
+            },
+            _ => Err(DeserializeError::InvalidSize)
+        }
+    }
     pub fn deserialize_str<'b>(&mut self, allocator: fn(usize) -> Option<&'b mut [u8]>) -> DeserializeResult<&'b mut str> {
         let buffer = self.deserialize_u8_array()?;
         match allocator(buffer.len()) {

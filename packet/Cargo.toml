@@ -10,6 +10,9 @@ crate-type = [ "staticlib", "rlib" ]
 [dependencies]
 concat-idents = "1.0.0"
 
+[dev-dependencies]
+rand = "0.7.3"
+
 [features]
 default = []
 no_panic_handler = []

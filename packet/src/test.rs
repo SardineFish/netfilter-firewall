@@ -77,3 +77,4 @@ fn alloc(size: usize) -> &'static mut [u8] {
         &mut TEST_MEM_POOL[..size]
     }
 }
+
