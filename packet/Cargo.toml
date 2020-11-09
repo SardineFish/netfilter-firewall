@@ -5,7 +5,7 @@ authors = ["SardineFish <sardine@live.cn>"]
 edition = "2018"
 
 [lib]
-crate-type = [ "staticlib", "rlib" ]
+crate-type = [ "staticlib" ]
 
 [dependencies]
 concat-idents = "1.0.0"

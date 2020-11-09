@@ -1,14 +1,17 @@
 use crate::deserialize::{Deserialize, DeserializeResult, Deserializer};
 use crate::serialize::{Serialize, Serializer};
 
+#[cfg(feature = "no_std")]
+use alloc::vec::Vec;
+
 #[derive(Debug, PartialEq)]
-pub struct CapturedPacket<'a> {
+pub struct CapturedPacket {
     pub source_ip: u32,
     pub dest_ip: u32,
     pub source_port: u16,
     pub dest_port: u16,
     pub protocol: u8,
-    pub payload: &'a [u8],
+    pub payload: Vec<u8>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -22,18 +25,18 @@ pub struct FilterRule {
     pub protocol: u8,
 }
 
-impl<'a> Drop for CapturedPacket<'a> {
+impl Drop for CapturedPacket {
     fn drop(&mut self) {
-        unsafe {
-            std::alloc::dealloc(
-                self.payload.as_ptr() as *mut u8,
-                std::alloc::Layout::from_size_align(self.payload.len(), 1).unwrap(),
-            );
-        }
+        // unsafe {
+        //     std::alloc::dealloc(
+        //         self.payload.as_ptr() as *mut u8,
+        //         std::alloc::Layout::from_size_align(self.payload.len(), 1).unwrap(),
+        //     );
+        // }
     }
 }
 
-impl<'a> Serialize for CapturedPacket<'a> {
+impl Serialize for CapturedPacket {
     fn serialize<'s>(&self, serializer: Serializer<'s>) -> Serializer<'s> {
         serializer
             .serialize(&self.source_ip)
@@ -41,24 +44,21 @@ impl<'a> Serialize for CapturedPacket<'a> {
             .serialize(&self.source_port)
             .serialize(&self.dest_port)
             .serialize(&self.protocol)
-            .serialize(&self.payload)
+            .serialize(&self.payload.as_slice())
     }
 }
 
-impl<'b> Deserialize<CapturedPacket<'b>> for CapturedPacket<'b> {
+impl Deserialize<CapturedPacket> for CapturedPacket {
     fn deserialize<'a>(
         deserializer: &mut Deserializer<'a>,
-    ) -> DeserializeResult<CapturedPacket<'b>> {
+    ) -> DeserializeResult<CapturedPacket> {
         Ok(CapturedPacket {
             source_ip: deserializer.deserialize_u32()?,
             dest_ip: deserializer.deserialize_u32()?,
             source_port: deserializer.deserialize_u16()?,
             dest_port: deserializer.deserialize_u16()?,
             protocol: deserializer.deserialize_u8()?,
-            payload: deserializer.deserialize_u8_array_alloc(|size| unsafe {
-                let ptr = std::alloc::alloc(std::alloc::Layout::from_size_align(size, 1).unwrap());
-                Some(core::slice::from_raw_parts_mut(ptr, size))
-            })?,
+            payload: deserializer.deserialize_u8_vec()?,
         })
     }
 }
@@ -107,6 +107,11 @@ mod test {
             let mut rng = rand::thread_rng();
 
             let alloc_buf = alloc::alloc(alloc::Layout::from_size_align(256, 1).unwrap());
+            
+            let mut payload = vec![0; 256];
+            for element in &mut payload {
+                *element = rng.gen();
+            }
 
             let packet = CapturedPacket {
                 source_ip: rng.gen(),
@@ -114,7 +119,7 @@ mod test {
                 source_port: rng.gen(),
                 dest_port: rng.gen(),
                 protocol: rng.gen(),
-                payload: core::slice::from_raw_parts(alloc_buf, 256),
+                payload: payload,
             };
 
             let mut buffer = [0; 8192];

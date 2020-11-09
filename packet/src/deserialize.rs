@@ -4,13 +4,16 @@ extern crate concat_idents;
 use core::cmp;
 use core::mem::size_of;
 
+#[cfg(feature = "no_std")]
+use alloc::vec::Vec;
+
 pub trait DataReader<'a> {
     fn read(&mut self, size: usize) -> &'a [u8];
 }
 
 pub struct BinaryReader<'b> {
     buffer: &'b [u8],
-    pos: usize,
+    pos: usize, 
 }
 
 impl<'b> BinaryReader<'b> {
@@ -141,6 +144,12 @@ impl<'a> Deserializer<'a> {
             },
             _ => Err(DeserializeError::AllocationFaild),
         }
+    }
+    pub fn deserialize_u8_vec(&mut self) -> DeserializeResult<Vec<u8>> {
+        let buffer = self.deserialize_u8_array()?;
+        let mut vec = Vec::<u8>::with_capacity(buffer.len());
+        vec.extend_from_slice(buffer);
+        Ok(vec)
     }
 }
 
