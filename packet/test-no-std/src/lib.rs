@@ -55,8 +55,8 @@ use rand::SeedableRng;
 #[no_mangle]
 extern "C" fn rust_main() {
     let mut rng = rand::rngs::StdRng::seed_from_u64(12345);
-    let vec = alloc::vec::Vec::<i32>::with_capacity(100);
-    let mut payload = alloc::vec![0; 256];
+    let vec = alloc::vec::Vec::<i32>::with_capacity(123);
+    let mut payload = alloc::vec![0; 34];
     for element in &mut payload {
         *element = rng.gen();
     }
@@ -74,4 +74,6 @@ extern "C" fn rust_main() {
     let deserialized_packet = deserialize::deserialize::<CapturedPacket>(&buffer).unwrap();
 
     assert_eq!(packet, deserialized_packet);
+
+
 }

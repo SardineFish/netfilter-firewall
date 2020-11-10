@@ -27,12 +27,16 @@ pub struct FilterRule {
 
 impl Drop for CapturedPacket {
     fn drop(&mut self) {
-        // unsafe {
-        //     std::alloc::dealloc(
-        //         self.payload.as_ptr() as *mut u8,
-        //         std::alloc::Layout::from_size_align(self.payload.len(), 1).unwrap(),
-        //     );
-        // }
+    }
+}
+
+impl CapturedPacket {
+    pub fn total_size(&self) -> usize {
+        return core::mem::size_of::<u32>() * 2 
+            + core::mem::size_of::<u16>() * 2
+            + core::mem::size_of::<u8>() * 1
+            + core::mem::size_of::<usize>()
+            + self.payload.len();
     }
 }
 
@@ -108,7 +112,7 @@ mod test {
 
             let alloc_buf = alloc::alloc(alloc::Layout::from_size_align(256, 1).unwrap());
             
-            let mut payload = vec![0; 256];
+            let mut payload = vec![0; rng.gen_range(64, 1024)];
             for element in &mut payload {
                 *element = rng.gen();
             }
@@ -122,13 +126,28 @@ mod test {
                 payload: payload,
             };
 
-            let mut buffer = [0; 8192];
-            serialize::serialize(&packet, &mut buffer);
+            let mut buffer = vec![0; packet.total_size()];
+            let serialized_size = serialize::serialize(&packet, &mut buffer);
+
+            assert_eq!(packet.total_size(), serialized_size);
+
             let deserialized_packet = deserialize::deserialize::<CapturedPacket>(&buffer).unwrap();
 
             assert_eq!(packet, deserialized_packet);
 
         }
+    }
+
+    #[test]
+    fn test_captured_packet_zero_payload() {
+        let packet: CapturedPacket = Default::default();
+
+        let mut buffer = [0; 8192];
+        serialize::serialize(&packet, &mut buffer);
+        let deserialized_packet = deserialize::deserialize::<CapturedPacket>(&buffer).unwrap(); 
+
+        assert_eq!(deserialized_packet.payload.len(), 0);
+        assert_eq!(deserialized_packet, packet);
     }
 
     #[test]
