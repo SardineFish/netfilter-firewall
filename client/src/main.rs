@@ -6,6 +6,7 @@ mod protocol;
 use netlink_sys::{Socket,SocketAddr};
 use netlink_packet_core as nl_packet;
 use packet::{deserialize, packets};
+use std::net;
 
 const NETLINK_PROTOCOL: i32 = 17;
 
@@ -90,14 +91,27 @@ pub fn main() {
     //     .connect(&addr)
     //     .expect("Failed to connect to remote socket.");
 
-    let msg = Message::new("Hellow kernel!".as_bytes());
+    let mut buffer: [u8; 1024] = [0; 1024];
+    let rules = packets::FilterRule {
+        source_ip: 0,
+        source_mask: 0,
+        dest_ip: net::Ipv4Addr::new(127, 0, 0, 1).into(),
+        dest_mask: net::Ipv4Addr::new(255, 255, 255, 255).into(),
+        source_port: 0,
+        dest_port: 0,
+        protocol: 0
+    };
+    let size = packet::serialize(&rules, &mut buffer);
+    let buffer = &buffer[..size];
+
+    let msg = Message::new(buffer);
 
     let mut netlink_msg = nl_packet::NetlinkMessage::from(msg);
     netlink_msg.finalize();
     let addr = SocketAddr::new(0, 0);
 
     let mut socket = Socket::new(NETLINK_PROTOCOL as isize).unwrap();
-    let mut buf = vec![0; 8192];
+    let mut buf = vec![0; 65536];
     netlink_msg.serialize(&mut buf);
 
     socket.send_to(&buf[..netlink_msg.buffer_len()], &addr, 0).unwrap();
@@ -113,10 +127,12 @@ pub fn main() {
         if let nl_packet::NetlinkPayload::InnerMessage(msg) = parsed.payload {
             let packet = deserialize::<packets::CapturedPacket>(&msg.data).unwrap();
             if packet.protocol == protocol::ip_protocol::TCP {
-                println!("TCP {}:{} -> {}:{}", packet.source_ip, packet.source_port, packet.dest_ip.to_be(), packet.dest_port.to_be());
+                let src = net::Ipv4Addr::from(packet.source_ip.to_be()).to_string();
+                let dst = net::Ipv4Addr::from(packet.dest_ip.to_be()).to_string();
+                println!("TCP {}:{} -> {}:{}", src, packet.source_port.to_be(), dst, packet.dest_port.to_be());
             }
             else if packet.protocol == protocol::ip_protocol::UDP {
-                println!("UDP {}:{} -> {}:{}", packet.source_ip, packet.source_port, packet.dest_ip.to_be(), packet.dest_port.to_be());
+                // println!("UDP {}:{} -> {}:{}", packet.source_ip, packet.source_port, packet.dest_ip.to_be(), packet.dest_port.to_be());
             }
 
 

@@ -91280,6 +91280,9 @@ extern "C" {
 extern "C" {
     pub fn tcp_hdr_wrapped(skb: *const sk_buff) -> *mut tcphdr;
 }
+extern "C" {
+    pub fn udp_hdr_wrapped(skb: *const sk_buff) -> *mut udphdr;
+}
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct GFP {}

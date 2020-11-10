@@ -2,6 +2,7 @@ mod constants;
 
 use crate::kernel_bindings::bindings;
 pub use constants::ip_protocol;
+pub use constants::protocol_family;
 use core::mem::size_of;
 
 extern "C" {
@@ -16,6 +17,11 @@ pub struct SocketBuffer {
 pub struct NetPacket<'a, T> {
     pub header: T,
     pub payload: &'a [u8],
+}
+
+pub enum Port<T> {
+    Some(T, T),
+    None
 }
 
 pub type UdpHeader = bindings::udphdr;
@@ -60,6 +66,33 @@ where
     }
 }
 
+impl IPv4Header {
+    pub fn from_skbuff<'buff>(sk_buff: &'buff bindings::sk_buff) -> Option<&'buff IPv4Header> {
+        unsafe {
+            let header_ptr = bindings::ip_hdr_wrapped(sk_buff as *const bindings::sk_buff);
+            header_ptr.as_ref()
+        }
+    }
+}
+
+impl TcpHeader {
+    pub fn from_skbuff<'buff>(sk_buff: &'buff bindings::sk_buff) -> Option<&'buff TcpHeader> {
+        unsafe {
+            let header_ptr = bindings::tcp_hdr_wrapped(sk_buff as *const bindings::sk_buff);
+            header_ptr.as_ref()
+        }
+    }
+}
+
+impl UdpHeader {
+    pub fn from_skbuff<'buff>(sk_buff: &'buff bindings::sk_buff) -> Option<&'buff UdpHeader> {
+        unsafe {
+            let header_ptr = bindings::udp_hdr_wrapped(sk_buff as *const bindings::sk_buff);
+            header_ptr.as_ref()
+        }
+    }
+}
+
 impl<'a> NetPacket<'a, TcpHeader> {
     pub fn from_lower(ip_packet: &IPv4Packet<'a>) -> Option<TcpPacket<'a>> {
         unsafe {
@@ -95,3 +128,16 @@ impl<'a> NetPacket<'a, UdpHeader> {
         }
     }
 }
+
+
+// impl From<&TcpHeader> for Port<u16> {
+//     fn from(&header: TcpHeader) -> Self {
+//         Port::Some(header.source, header.dest)
+//     }
+// }
+
+// impl From<&UdpHeader> for Port<u16> {
+//     fn from(&header: UdpHeader) -> Self {
+//         Port::Some(header.source, header.dest)
+//     }
+// }

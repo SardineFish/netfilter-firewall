@@ -64,6 +64,11 @@ struct tcphdr* tcp_hdr_wrapped(const struct sk_buff* skb)
     return tcp_hdr(skb);
 }
 
+struct udphdr* udp_hdr_wrapped(const struct sk_buff* skb)
+{
+    return udp_hdr(skb);
+}
+
 unsigned int hook_func(void* priv, struct sk_buff* skb, const struct nf_hook_state* state)
 {
     register struct iphdr* ip_header = ip_hdr(skb);

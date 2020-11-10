@@ -23,6 +23,7 @@ const INCLUDE_FUNC: &[&str] = &[
     "ip_hdr_wrapped",
     "tcp_hdr_wrapped",
     "skb_copy_bits",
+    "udp_hdr_wrapped"
     
 ];
 const INCLUDE_TYPE: &[&str] = &[

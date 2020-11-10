@@ -18,6 +18,7 @@ use packet::{deserialize, packets, serialize};
 static mut NETFILTER_HOOK: Option<netfilter::NetfilterHook> = None;
 static mut NETLINK_SOCKET: Option<netlink::NetLinkSock> = None;
 static mut CONNECTED_CLIENT_PORT: u32 = 0;
+static mut PACKET_FILTER_RULE: Option<packet::packets::FilterRule> = None;
 const NETLINK_PROTOCOL: i32 = 17;
 
 fn init() -> i32 {
@@ -40,6 +41,7 @@ fn init() -> i32 {
             NETFILTER_HOOK = Some(netfilter::NetfilterHook::new());
             if let Some(hook) = &mut NETFILTER_HOOK {
                 hook
+                    .pre_filter(packet_filter)
                     .hook_func(packet_callback)
                     .hook(netfilter::HookPoint::PreRouting)
                     .register();
@@ -56,7 +58,6 @@ fn init() -> i32 {
 }
 
 fn packet_callback(packet: net::IPv4Packet) -> netfilter::HookResponse {
-
     let mut captured: packet::packets::CapturedPacket = Default::default();
 
     captured.protocol = packet.header.protocol;
@@ -107,21 +108,75 @@ fn msg_callback(msg_recieved: &kernel_bindings::netlink::NetlinkMsgRaw) {
         msg_recieved.addr.pid,
         msg_recieved.payload.len()
     );
-    
 
-    unsafe {
-
-        CONNECTED_CLIENT_PORT = msg_recieved.addr.pid;
-
-        if let Some(socket) = &NETLINK_SOCKET {
-            let payload = alloc::format!(
-                "received netlink packet from {} with {}bytes payload.",
-                msg_recieved.addr.pid,
-                msg_recieved.payload.len()
-            );
-            let msg = netlink::NetlinkMsgRaw::new(payload.as_bytes());
-            // socket.send(msg_recieved.addr.pid, &msg);
+    if let Ok(rule) = deserialize::<packets::FilterRule>(msg_recieved.payload) {
+        unsafe {
+            CONNECTED_CLIENT_PORT = msg_recieved.addr.pid;
+            PACKET_FILTER_RULE = Some(rule);
         }
+        println!("Received filter rules from {}", msg_recieved.addr.pid);
+    }
+    else {
+        unsafe {
+            println!("Received non-rules packet from {}, stop capture", msg_recieved.addr.pid);
+        }
+    }
+
+    // unsafe {
+    //     CONNECTED_CLIENT_PORT = msg_recieved.addr.pid;
+
+    //     if let Some(socket) = &NETLINK_SOCKET {
+    //         let payload = alloc::format!(
+    //             "received netlink packet from {} with {}bytes payload.",
+    //             msg_recieved.addr.pid,
+    //             msg_recieved.payload.len()
+    //         );
+    //         let msg = netlink::NetlinkMsgRaw::new(payload.as_bytes());
+    //         // socket.send(msg_recieved.addr.pid, &msg);
+    //     }
+    // }
+}
+
+fn packet_filter(ip_header: &net::IPv4Header, sk_buff: &kernel_bindings::bindings::sk_buff,) -> bool {
+    let mut rule: &Option<packet::packets::FilterRule>;
+    unsafe {
+        rule = &PACKET_FILTER_RULE;
+    }
+    if let Some(rule) = rule {
+        let src_addr_matched =
+            (ip_header.saddr.to_be() & rule.source_mask) == (rule.source_ip & rule.source_mask);
+        let dest_addr_matched =
+            (ip_header.daddr.to_be() & rule.dest_mask) == (rule.dest_ip & rule.dest_mask);
+        if !src_addr_matched || !dest_addr_matched {
+            return false;
+        }
+
+        if rule.protocol != 0 && rule.protocol != ip_header.protocol {
+            return false;
+        }
+
+        let (src_port, dest_port) = match ip_header.protocol {
+            net::ip_protocol::UDP => match net::UdpHeader::from_skbuff(sk_buff) {
+                Some(header) => (header.source, header.dest),
+                None => (0, 0),
+            },
+            net::ip_protocol::TCP => match net::TcpHeader::from_skbuff(sk_buff) {
+                Some(header) => (header.source, header.dest),
+                None => (0, 0),
+            },
+            _ => (0, 0),
+        };
+
+        let src_port_mismatched = src_port != 0 && rule.source_port != 0 && rule.source_port != src_port;
+        let dest_port_mismatched = dest_port != 0 && rule.dest_port != 0 && rule.dest_port != dest_port;
+
+        if src_port_mismatched ||dest_port_mismatched {
+            return false;
+        }
+
+        return true;
+    } else {
+        return false;
     }
 }
 

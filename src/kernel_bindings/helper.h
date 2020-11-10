@@ -19,6 +19,8 @@ struct iphdr* ip_hdr_wrapped(const struct sk_buff* skb);
 
 struct tcphdr* tcp_hdr_wrapped(const struct sk_buff* skb);
 
+struct udphdr* udp_hdr_wrapped(const struct sk_buff* skb);
+
 struct GFP
 {
     enum
