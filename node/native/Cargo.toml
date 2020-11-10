@@ -1,0 +1,21 @@
+[package]
+name = "client-package"
+version = "0.1.0"
+authors = ["SardineFish <sardine@live.cn>"]
+license = "GPL-3.0"
+build = "build.rs"
+edition = "2018"
+exclude = ["artifacts.json", "index.node"]
+
+[lib]
+name = "client_package"
+crate-type = ["cdylib"]
+
+[build-dependencies]
+neon-build = "0.5.1"
+
+[dependencies]
+neon = "0.5.1"
+packet = { path = "../../packet" }
+netlink-sys = { git = "https://github.com/little-dude/netlink" }
+netlink-packet-core = "0.2.1"

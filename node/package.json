@@ -1,0 +1,17 @@
+{
+  "name": "client-package",
+  "version": "0.1.0",
+  "description": "",
+  "main": "lib/index.js",
+  "author": "SardineFish <sardine@live.cn>",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "neon-cli": "^0.5.1"
+  },
+  "scripts": {
+    "install": "neon build"
+  },
+  "devDependencies": {
+    "typescript": "^4.0.5"
+  }
+}
