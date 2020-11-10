@@ -21,7 +21,9 @@ const INCLUDE_FUNC: &[&str] = &[
     "nf_unregister_net_hook",
     "nf_ip_hook_priorities",
     "ip_hdr_wrapped",
-    "tcp_hdr_wrapped"
+    "tcp_hdr_wrapped",
+    "skb_copy_bits",
+    
 ];
 const INCLUDE_TYPE: &[&str] = &[
     "nlmsghdr",

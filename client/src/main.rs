@@ -82,6 +82,7 @@ impl<T> nl_packet::NetlinkDeserializable<PacketMessage<T>> for PacketMessage<T> 
 }
 
 pub fn main() {
+
     // let addr = SocketAddr::new(5325, 1);
     // let socket = Socket::new(16)
     //     .expect("Failed to create netlink socket on protocol 16");
@@ -112,10 +113,10 @@ pub fn main() {
         if let nl_packet::NetlinkPayload::InnerMessage(msg) = parsed.payload {
             let packet = deserialize::<packets::CapturedPacket>(&msg.data).unwrap();
             if packet.protocol == protocol::ip_protocol::TCP {
-                println!("TCP {}:{} -> {}:{}", packet.source_ip, packet.source_port, packet.dest_ip, packet.dest_port);
+                println!("TCP {}:{} -> {}:{}", packet.source_ip, packet.source_port, packet.dest_ip.to_be(), packet.dest_port.to_be());
             }
             else if packet.protocol == protocol::ip_protocol::UDP {
-                println!("UDP {}:{} -> {}:{}", packet.source_ip, packet.source_port, packet.dest_ip, packet.dest_port);
+                println!("UDP {}:{} -> {}:{}", packet.source_ip, packet.source_port, packet.dest_ip.to_be(), packet.dest_port.to_be());
             }
 
 

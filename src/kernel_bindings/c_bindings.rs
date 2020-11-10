@@ -38777,6 +38777,14 @@ impl sk_buff {
 extern "C" {
     pub fn skb_dequeue(list: *mut sk_buff_head) -> *mut sk_buff;
 }
+extern "C" {
+    pub fn skb_copy_bits(
+        skb: *const sk_buff,
+        offset: c_types::c_int,
+        to: *mut c_types::c_void,
+        len: c_types::c_int,
+    ) -> c_types::c_int;
+}
 #[doc = "\tstruct skb_ext - sk_buff extensions"]
 #[doc = "\t@refcnt: 1 on allocation, deallocated on 0"]
 #[doc = "\t@offset: offset to add to @data to obtain extension address"]

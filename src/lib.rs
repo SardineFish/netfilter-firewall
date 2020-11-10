@@ -56,6 +56,7 @@ fn init() -> i32 {
 }
 
 fn packet_callback(packet: net::IPv4Packet) -> netfilter::HookResponse {
+
     let mut captured: packet::packets::CapturedPacket = Default::default();
 
     captured.protocol = packet.header.protocol;
@@ -63,17 +64,17 @@ fn packet_callback(packet: net::IPv4Packet) -> netfilter::HookResponse {
     captured.dest_ip = packet.header.daddr;
 
     if (packet.header.protocol == bindings::IpProtocol_TCP as u8) {
-        if let Some(tcp) = net::TcpPacket::from(&packet) {
+        if let Some(tcp) = net::TcpPacket::from_lower(&packet) {
             let tcp = tcp as net::TcpPacket;
-            println!("TCP {} -> {}", tcp.header.source, tcp.header.dest);
+            // println!("TCP {} -> {}", tcp.header.source.to_be(), tcp.header.dest.to_be());
             captured.source_port = tcp.header.source;
             captured.dest_port = tcp.header.dest;
             captured.payload = tcp.payload.to_vec();
         }
     } else if (packet.header.protocol == bindings::IpProtocol_UDP as u8) {
-        if let Some(udp) = net::UdpPacket::from(&packet) {
+        if let Some(udp) = net::UdpPacket::from_lower(&packet) {
             // let udp = udp as net::UdpPacket;
-            println!("UDP {} -> {}", udp.header.source, udp.header.dest);
+            // println!("UDP {} -> {}", udp.header.source, udp.header.dest);
 
             captured.source_port = udp.header.source;
             captured.dest_port = udp.header.dest;
@@ -81,8 +82,10 @@ fn packet_callback(packet: net::IPv4Packet) -> netfilter::HookResponse {
         }
     }
 
-    let mut buf = [0; 65536];
+    let mut buf = vec![0; captured.total_size() + 64];
     let size = packet::serialize(&captured, &mut buf);
+    // println!("serialize {} bytes with total size {}.", size, packet.header.tot_len.to_be());
+
     let slice = &buf[..size];
     let mut portid = 0;
 

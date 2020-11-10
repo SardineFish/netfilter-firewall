@@ -35,10 +35,10 @@ pub trait PacketSize {
 
 impl PacketSize for IPv4Header {
     fn packet_size(&self) -> usize {
-        self.tot_len as usize
+        self.tot_len.to_be() as usize
     }
     fn header_size(&self) -> usize {
-        core::mem::size_of::<IPv4Header>()
+        self._bitfield_1.get(0, 4) as usize * 4
     }
 }
 
@@ -46,32 +46,31 @@ impl<'a, T> NetPacket<'a, T>
 where
     T: PacketSize + Copy,
 {
-    pub fn from(header_ptr: *mut T) -> Self {
+    pub fn from_buf(buffer: &'a [u8]) -> Self {
         unsafe {
-            let payload_ptr = (header_ptr as usize + (*header_ptr).header_size()) as *mut u8;
+            let header_ptr = buffer.as_ptr() as *const T;
+            let header_size = (*header_ptr).header_size();
             use crate::println;
-            println!("payload size {}", (*header_ptr).payload_size());
+            // println!("{} {}", header_size, buffer.len());
             NetPacket {
                 header: *header_ptr,
-                payload: core::slice::from_raw_parts_mut(payload_ptr, 1),
+                payload: &buffer[header_size..],
             }
         }
     }
 }
 
 impl<'a> NetPacket<'a, TcpHeader> {
-    pub fn from(ip_packet: &IPv4Packet<'a>) -> Option<TcpPacket<'a>> {
+    pub fn from_lower(ip_packet: &IPv4Packet<'a>) -> Option<TcpPacket<'a>> {
         unsafe {
             match ip_packet.header.protocol {
                 ip_protocol::TCP => {
-                    let tcp_header = (ip_packet.payload.as_ptr() as usize + size_of::<IPv4Header>())
-                        as *const TcpHeader;
-                    let tcp_payload_size = ip_packet.header.tot_len as usize
-                        - size_of::<IPv4Header>()
-                        - size_of::<TcpHeader>();
+                    let tcp_header = ip_packet.payload.as_ptr() as *const TcpHeader;
+                    let data_offset = (*tcp_header)._bitfield_1.get(4, 4) as usize * 4;
+                        
                     Some(TcpPacket::<'a> {
                         header: *tcp_header,
-                        payload: &ip_packet.payload[size_of::<TcpHeader>()..],
+                        payload: &ip_packet.payload[data_offset..],
                     })
                 }
                 _ => None,
@@ -81,7 +80,7 @@ impl<'a> NetPacket<'a, TcpHeader> {
 }
 
 impl<'a> NetPacket<'a, UdpHeader> {
-    pub fn from(ip_packet:&IPv4Packet<'a>) -> Option<Self> {
+    pub fn from_lower(ip_packet:&IPv4Packet<'a>) -> Option<Self> {
         unsafe {
             match ip_packet.header.protocol {
                 ip_protocol::UDP => {

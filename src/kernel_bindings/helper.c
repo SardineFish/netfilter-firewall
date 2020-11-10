@@ -69,17 +69,16 @@ unsigned int hook_func(void* priv, struct sk_buff* skb, const struct nf_hook_sta
     register struct iphdr* ip_header = ip_hdr(skb);
     if(ip_header->protocol == IPPROTO_TCP) {
         register struct tcphdr* tcp_header = tcp_hdr(skb);
-        printk("TCP %d -> %d\n", tcp_header->source, tcp_header->dest);
+        printk("TCP %d -> %d\n", htons(tcp_header->source), htons(tcp_header->dest));
+        printk("TCP == IPv4 + 20 ? %d\n", ((void*)tcp_header) == ((void*)ip_header + 20));
     }
     return NF_ACCEPT;
 }
 
-
-
+static struct nf_hook_ops nfho;
 
 extern void extern_code(void)
 {
-    struct nf_hook_ops nfho;
     nfho.hook = hook_func;
     nfho.pf = PF_INET;
     nfho.hooknum = NF_INET_PRE_ROUTING;
@@ -91,7 +90,6 @@ extern void extern_code(void)
 
 extern void extern_cleanup(void)
 {
-    struct nf_hook_ops nfho;
     nfho.hook = hook_func;
     nfho.pf = PF_INET;
     nfho.hooknum = NF_INET_PRE_ROUTING;
