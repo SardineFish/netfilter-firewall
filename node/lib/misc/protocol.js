@@ -1,0 +1,31 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var Protocol;
+(function (Protocol) {
+    Protocol[Protocol["IP"] = 0] = "IP";
+    Protocol[Protocol["ICMP"] = 1] = "ICMP";
+    Protocol[Protocol["IGMP"] = 2] = "IGMP";
+    Protocol[Protocol["IPIP"] = 4] = "IPIP";
+    Protocol[Protocol["TCP"] = 6] = "TCP";
+    Protocol[Protocol["EGP"] = 8] = "EGP";
+    Protocol[Protocol["PUP"] = 12] = "PUP";
+    Protocol[Protocol["UDP"] = 17] = "UDP";
+    Protocol[Protocol["IDP"] = 22] = "IDP";
+    Protocol[Protocol["TP"] = 29] = "TP";
+    Protocol[Protocol["DCCP"] = 33] = "DCCP";
+    Protocol[Protocol["IPV6"] = 41] = "IPV6";
+    Protocol[Protocol["RSVP"] = 46] = "RSVP";
+    Protocol[Protocol["GRE"] = 47] = "GRE";
+    Protocol[Protocol["ESP"] = 50] = "ESP";
+    Protocol[Protocol["AH"] = 51] = "AH";
+    Protocol[Protocol["MTP"] = 92] = "MTP";
+    Protocol[Protocol["BEETPH"] = 94] = "BEETPH";
+    Protocol[Protocol["ENCAP"] = 98] = "ENCAP";
+    Protocol[Protocol["PIM"] = 103] = "PIM";
+    Protocol[Protocol["COMP"] = 108] = "COMP";
+    Protocol[Protocol["SCTP"] = 132] = "SCTP";
+    Protocol[Protocol["UDPLITE"] = 136] = "UDPLITE";
+    Protocol[Protocol["MPLS"] = 137] = "MPLS";
+    Protocol[Protocol["RAW"] = 255] = "RAW";
+})(Protocol = exports.Protocol || (exports.Protocol = {}));
+//# sourceMappingURL=protocol.js.map

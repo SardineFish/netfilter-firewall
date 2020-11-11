@@ -91,6 +91,7 @@ fn capture_packet(mut cx: FunctionContext) -> JsResult<JsObject> {
             let slice = data.as_mut_slice::<u8>();
             slice.copy_from_slice(&packet.payload);
         }
+        obj.set(&mut cx, "payload", buffer).unwrap();
         Ok(obj)
     } else {
         cx.throw_error("Netlink not connected to kernel.")

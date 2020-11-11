@@ -1,4 +1,12 @@
+console.log("worker");
+
+// onmessage = () => {
+//     postMessage("fuck up");
+// }
+
+
 import addon, { capturePacket, connectKernel, FilterRule, filterRules } from "../native";
+import ipAddr, { Address4 } from "ip-address";
 
 enum Protocol {
     IP = 0,
@@ -38,11 +46,19 @@ let rules: FilterRule = {
     protocol: Protocol.TCP
 };
 
+console.log("Setup worker.");
+
 addon.connectKernel();
 filterRules(rules);
+
+console.log("Connected to kernel.");
 
 while (true)
 {
     let packet = capturePacket();
-    console.log(`TCP ${packet.sourcePort} -> ${packet.destPort}`);
+    let srcAddr = Address4.fromInteger(packet.sourceIP).toArray().join(".");
+    let dstAddr = Address4.fromInteger(packet.destIP).toArray().join(".");
+    // console.log(packet.payload);
+    postMessage(packet, [packet.payload]);
+    // console.log(`TCP ${srcAddr}:${packet.sourcePort} -> ${dstAddr}:${packet.destPort}`);
 }
