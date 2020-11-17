@@ -51,6 +51,7 @@ static mut PRE_FILTER_FUNC_RUST: Option<PreFilterFuncType> = None;
 
 pub struct NetfilterHook {
     hook_ops: bindings::nf_hook_ops,
+    pub active: bool,
 }
 
 #[allow(dead_code)]
@@ -84,6 +85,7 @@ impl NetfilterHook {
                 priority: bindings::nf_ip_hook_priorities_NF_IP_PRI_FIRST,
                 ..Default::default()
             },
+            active: false,
         }
     }
     pub fn protocol_family(&mut self, pf: u8) -> &mut Self {
@@ -111,21 +113,30 @@ impl NetfilterHook {
         }
     }
     pub fn register(&mut self) -> &mut Self {
+        if self.active {
+            return self
+        }
         unsafe {
             self.hook_ops.hook = Some(netfilter_hook_func);
             bindings::nf_register_net_hook(
                 &mut net::init_net,
                 &self.hook_ops as *const bindings::nf_hook_ops,
             );
+            self.active = true;
             self
         }
     }
-    pub fn unregister(&self) {
+    pub fn unregister(&mut self) -> &mut Self {
+        if !self.active {
+            return self
+        }
         unsafe {
             bindings::nf_unregister_net_hook(
                 &mut net::init_net,
                 &self.hook_ops as *const bindings::nf_hook_ops,
             );
         }
+        self.active = false;
+        self
     }
 }

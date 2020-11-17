@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var Protocol;
 (function (Protocol) {
-    Protocol[Protocol["IP"] = 0] = "IP";
+    Protocol[Protocol["NONE"] = 0] = "NONE";
     Protocol[Protocol["ICMP"] = 1] = "ICMP";
     Protocol[Protocol["IGMP"] = 2] = "IGMP";
     Protocol[Protocol["IPIP"] = 4] = "IPIP";

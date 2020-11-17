@@ -7,6 +7,7 @@ const react_1 = __importDefault(require("react"));
 const antd_1 = require("antd");
 const ip_address_1 = require("ip-address");
 const protocol_1 = require("../misc/protocol");
+const worker_controller_1 = __importDefault(require("../misc/worker-controller"));
 let worker = null;
 const columns = [
     {
@@ -39,20 +40,20 @@ class PacketList extends react_1.default.Component {
         };
     }
     componentDidMount() {
-        if (!worker) {
-            worker = new Worker("../lib/worker-wrapper.js");
-            worker.addEventListener("message", (e) => this.onPacket(e));
-            console.log("load web worker.");
-        }
+        // if (!worker) {
+        //     worker = new Worker("../lib/worker-wrapper.js");
+        //     worker.addEventListener("message", (e) => this.onPacket(e));
+        //     console.log("load web worker.");
+        // }
+        worker_controller_1.default.setPacketCaptureCallback(packet => this.onPacket(packet));
     }
-    onPacket(e) {
-        let packet = e.data;
+    onPacket(packet) {
         let srcIP = ip_address_1.Address4.fromInteger(packet.sourceIP).toArray().join(".");
         let dstIP = ip_address_1.Address4.fromInteger(packet.destIP).toArray().join(".");
         let info = {
             key: ++this.packetID,
-            src: srcIP,
-            dest: dstIP,
+            src: `${srcIP}:${packet.sourcePort}`,
+            dest: `${dstIP}:${packet.destPort}`,
             payloadSize: packet.payload.byteLength.toString(),
             protocol: protocol_1.Protocol[packet.protocol].toString(),
         };

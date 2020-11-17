@@ -1,4 +1,4 @@
-import electron, { app, BrowserWindow } from "electron";
+import electron, { app, BrowserWindow, globalShortcut } from "electron";
 
 app.on("ready", () => {
     const win = new BrowserWindow({
@@ -7,10 +7,20 @@ app.on("ready", () => {
         webPreferences: {
             nodeIntegration: true,
             nodeIntegrationInWorker: true,
+            
         }
     });
 
     win.loadFile("./pages/index.html");
+
+    const result = globalShortcut.register("CommandOrControl+F5", () => {
+        console.log("!");
+        app.relaunch();
+        app.exit(0);
+    });
+
+    if (!result)
+        console.warn("Failed to register shortcut.");
 
     
 });

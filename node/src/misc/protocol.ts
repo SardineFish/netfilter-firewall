@@ -1,5 +1,5 @@
 export enum Protocol {
-    IP = 0,
+    NONE = 0,
     ICMP = 1,
     IGMP = 2,
     IPIP = 4,

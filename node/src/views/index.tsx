@@ -1,25 +1,27 @@
-import React from "react";
+import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import antd, { Layout } from "antd";
 import { PacketList } from "../components/packet-list";
+import { ActionPanel } from "../components/action";
 
 const { Sider, Content, Header } = Layout;
 
 function App()
 {
+    const [capture, setCapture] = useState(false);
     return (<>
         <Layout className="layout-root">
-            <Header>
-                Packet Capture
+            <Header className="header">
+                <ActionPanel onCaptureChanged={(capture)=>setCapture(capture)}/>
             </Header>
-            <Content className="content" >
+            <Layout className="content">
                 <Content className="layout-capture">
-                    <PacketList></PacketList>
+                    <PacketList capture={capture}></PacketList>
                 </Content>
-                <Sider className="layout-packet" width={400}>
+                <Sider className="layout-packet" width={400} theme="light">
 
                 </Sider>
-            </Content>
+            </Layout>
         </Layout>
     </>);
 }

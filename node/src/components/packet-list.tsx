@@ -5,10 +5,12 @@ import { ColumnType } from "antd/lib/list";
 import { ColumnsType } from "antd/lib/table";
 import { Address4 } from "ip-address";
 import { Protocol } from "../misc/protocol";
+import workerController from "../misc/worker-controller";
 
 interface PacketListProps {
     className?: string;
     onPacketSelect?: (packet: CapturedPacket) => void;
+    capture: boolean;
 }
 
 let worker: Worker | null = null;
@@ -58,20 +60,22 @@ export class PacketList extends React.Component<PacketListProps, PacketListState
         };
     }
     componentDidMount() {
-        if (!worker) {
-            worker = new Worker("../lib/worker-wrapper.js");
-            worker.addEventListener("message", (e) => this.onPacket(e));
-            console.log("load web worker.");
-        }
+        // if (!worker) {
+        //     worker = new Worker("../lib/worker-wrapper.js");
+        //     worker.addEventListener("message", (e) => this.onPacket(e));
+        //     console.log("load web worker.");
+        // }
+
+        workerController.setPacketCaptureCallback(packet => this.onPacket(packet));
+
     }
-    onPacket(e: MessageEvent<CapturedPacket>) {
-        let packet = e.data;
+    onPacket(packet: CapturedPacket) {
         let srcIP = Address4.fromInteger(packet.sourceIP).toArray().join(".");
         let dstIP = Address4.fromInteger(packet.destIP).toArray().join(".");
         let info: PacketInfo = {
             key: ++this.packetID,
-            src: srcIP,
-            dest: dstIP,
+            src: `${srcIP}:${packet.sourcePort}`,
+            dest: `${dstIP}:${packet.destPort}`,
             payloadSize: packet.payload.byteLength.toString(),
             protocol: Protocol[packet.protocol].toString(),
         }

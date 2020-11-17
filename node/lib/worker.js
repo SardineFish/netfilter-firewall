@@ -41,25 +41,31 @@ var Protocol;
     Protocol[Protocol["MPLS"] = 137] = "MPLS";
     Protocol[Protocol["RAW"] = 255] = "RAW";
 })(Protocol || (Protocol = {}));
-let rules = {
+let initialRules = {
     sourceIP: 0,
     sourceMask: 0,
     sourcePort: 0,
     destIP: 0,
     destMask: 0,
     destPort: 0,
-    protocol: Protocol.TCP
+    protocol: 255
 };
 console.log("Setup worker.");
 native_1.default.connectKernel();
-native_1.filterRules(rules);
+native_1.filterRules(initialRules);
 console.log("Connected to kernel.");
-while (true) {
-    let packet = native_1.capturePacket();
-    let srcAddr = ip_address_1.Address4.fromInteger(packet.sourceIP).toArray().join(".");
-    let dstAddr = ip_address_1.Address4.fromInteger(packet.destIP).toArray().join(".");
-    // console.log(packet.payload);
-    postMessage(packet, [packet.payload]);
-    // console.log(`TCP ${srcAddr}:${packet.sourcePort} -> ${dstAddr}:${packet.destPort}`);
-}
+onmessage = (e) => {
+    const rule = e.data;
+    native_1.filterRules(rule);
+};
+(async () => {
+    while (true) {
+        let packet = native_1.capturePacket();
+        let srcAddr = ip_address_1.Address4.fromInteger(packet.sourceIP).toArray().join(".");
+        let dstAddr = ip_address_1.Address4.fromInteger(packet.destIP).toArray().join(".");
+        console.log(packet.payload);
+        postMessage(packet, [packet.payload]);
+        // console.log(`TCP ${srcAddr}:${packet.sourcePort} -> ${dstAddr}:${packet.destPort}`);
+    }
+})();
 //# sourceMappingURL=worker.js.map

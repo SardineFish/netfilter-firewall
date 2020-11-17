@@ -11,5 +11,12 @@ electron_1.app.on("ready", () => {
         }
     });
     win.loadFile("./pages/index.html");
+    const result = electron_1.globalShortcut.register("CommandOrControl+F5", () => {
+        console.log("!");
+        electron_1.app.relaunch();
+        electron_1.app.exit(0);
+    });
+    if (!result)
+        console.warn("Failed to register shortcut.");
 });
 //# sourceMappingURL=main.js.map

@@ -96,6 +96,7 @@ fn packet_callback(packet: net::IPv4Packet) -> netfilter::HookResponse {
             if portid != 0 {
                 let msg = netlink::NetlinkMsgRaw::new(slice);
                 socket.send(portid, &msg);
+                println!("sent");
             }
         }
     }
@@ -109,17 +110,31 @@ fn msg_callback(msg_recieved: &kernel_bindings::netlink::NetlinkMsgRaw) {
         msg_recieved.payload.len()
     );
 
-    if let Ok(rule) = deserialize::<packets::FilterRule>(msg_recieved.payload) {
-        unsafe {
-            CONNECTED_CLIENT_PORT = msg_recieved.addr.pid;
-            PACKET_FILTER_RULE = Some(rule);
+    unsafe {
+
+        if let Some(hook) = &mut NETFILTER_HOOK {
+            if let Ok(rule) = deserialize::<packets::FilterRule>(msg_recieved.payload) {
+                CONNECTED_CLIENT_PORT = msg_recieved.addr.pid;
+
+                println!("Received filter rules from {}", msg_recieved.addr.pid);
+                
+                if rule.protocol == 0 && hook.active {
+                    hook.unregister();
+                    println!("Stop capture.");
+                }
+                else if rule.protocol != 0 && !hook.active {
+                    hook.register();
+                    println!("Start capture.");
+                }
+
+                PACKET_FILTER_RULE = Some(rule);
+            }
+            else {
+                println!("Received non-rules packet from {}, stop capture", msg_recieved.addr.pid);
+            }
+        
         }
-        println!("Received filter rules from {}", msg_recieved.addr.pid);
-    }
-    else {
-        unsafe {
-            println!("Received non-rules packet from {}, stop capture", msg_recieved.addr.pid);
-        }
+
     }
 
     // unsafe {
@@ -151,17 +166,17 @@ fn packet_filter(ip_header: &net::IPv4Header, sk_buff: &kernel_bindings::binding
             return false;
         }
 
-        if rule.protocol != 0 && rule.protocol != ip_header.protocol {
+        if rule.protocol != 255 && rule.protocol != ip_header.protocol {
             return false;
         }
 
         let (src_port, dest_port) = match ip_header.protocol {
             net::ip_protocol::UDP => match net::UdpHeader::from_skbuff(sk_buff) {
-                Some(header) => (header.source, header.dest),
+                Some(header) => (header.source.to_be(), header.dest.to_be()),
                 None => (0, 0),
             },
             net::ip_protocol::TCP => match net::TcpHeader::from_skbuff(sk_buff) {
-                Some(header) => (header.source, header.dest),
+                Some(header) => (header.source.to_be(), header.dest.to_be()),
                 None => (0, 0),
             },
             _ => (0, 0),
@@ -200,7 +215,7 @@ fn exit() {
             _ => (),
         };
 
-        match &NETFILTER_HOOK {
+        match &mut NETFILTER_HOOK {
             Some(h) => {
                 h.unregister();
             }
