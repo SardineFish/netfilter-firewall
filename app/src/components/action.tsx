@@ -7,7 +7,7 @@ import { FilterRule } from "native";
 import { Protocol } from "../misc/protocol";
 import workerController from "../misc/worker-controller";
 
-export function ActionPanel(props: { onCaptureChanged: (capture: boolean) => void }) {
+export function ActionPanel(props: {}) {
     const [capture, setCapture] = useState(false);
     const [srcIp, setSrcIp] = useState("");
     const [dstIp, setDstIp] = useState("");

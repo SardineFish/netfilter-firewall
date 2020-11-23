@@ -8,15 +8,14 @@ const { Sider, Content, Header } = Layout;
 
 function App()
 {
-    const [capture, setCapture] = useState(false);
     return (<>
         <Layout className="layout-root">
             <Header className="header">
-                <ActionPanel onCaptureChanged={(capture)=>setCapture(capture)}/>
+                <ActionPanel/>
             </Header>
             <Layout className="content">
                 <Content className="layout-capture">
-                    <PacketList capture={capture}></PacketList>
+                    <PacketList></PacketList>
                 </Content>
                 <Sider className="layout-packet" width={400} theme="light">
 
