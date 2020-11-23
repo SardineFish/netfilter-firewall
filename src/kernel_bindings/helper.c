@@ -8,6 +8,7 @@
 #include <linux/ip.h>
 #include <linux/tcp.h>
 #include <linux/udp.h>
+#include <linux/icmp.h>
 // #include "./helper.h"
 
 void* nlmsg_data_non_inline(struct nlmsghdr* nlh)
@@ -27,10 +28,7 @@ struct nlmsghdr* nlmsg_put_wrapped(struct sk_buff* skb, u32 portid, u32 seq, u16
 
 struct sk_buff* nlmsg_new_non_inline(size_t payload, gfp_t flags)
 {
-    // printk("payload %d \n", payload);
     struct sk_buff* skb = nlmsg_new(payload, flags);
-    // kmalloc(nlmsg_total_size(payload), flags);
-    // printk("skb_tailroom %d\n", skb_tailroom(skb));
     return skb;
 }
 
@@ -62,6 +60,11 @@ struct iphdr* ip_hdr_wrapped(const struct sk_buff* skb)
 struct tcphdr* tcp_hdr_wrapped(const struct sk_buff* skb)
 {
     return tcp_hdr(skb);
+}
+
+struct icmphdr* icmp_hdr_wrapped(const struct sk_buff* skb)
+{
+    return icmp_hdr(skb);
 }
 
 struct udphdr* udp_hdr_wrapped(const struct sk_buff* skb)

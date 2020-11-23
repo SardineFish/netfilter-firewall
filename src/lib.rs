@@ -6,6 +6,7 @@ extern crate alloc;
 extern crate packet;
 
 mod kernel_bindings;
+mod firewall;
 use kernel_bindings::bindings;
 use kernel_bindings::net;
 use kernel_bindings::netfilter;
@@ -41,10 +42,12 @@ fn init() -> i32 {
             NETFILTER_HOOK = Some(netfilter::NetfilterHook::new());
             if let Some(hook) = &mut NETFILTER_HOOK {
                 hook
-                    .pre_filter(packet_filter)
-                    .hook_func(packet_callback)
-                    .hook(netfilter::HookPoint::PreRouting)
+                    .hook_input(netfilter::HookPoint::PreRouting)
+                    .hook_input_func(firewall::packet_input)
+                    .hook_output(netfilter::HookPoint::PostRouting)
+                    .hook_output_func(firewall::packet_output)
                     .register();
+                println!("Setup Netfilter hook.");
             }
         }
         match NETLINK_SOCKET {
@@ -56,6 +59,7 @@ fn init() -> i32 {
 
     return 0;
 }
+
 
 fn packet_callback(packet: net::IPv4Packet) -> netfilter::HookResponse {
     let mut captured: packet::packets::CapturedPacket = Default::default();
@@ -218,6 +222,7 @@ fn exit() {
         match &mut NETFILTER_HOOK {
             Some(h) => {
                 h.unregister();
+                println!("Cleanup Netfilter hook.")
             }
             _ => (),
         }

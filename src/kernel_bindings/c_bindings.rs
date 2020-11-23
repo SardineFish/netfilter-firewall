@@ -91246,6 +91246,234 @@ fn bindgen_test_layout_udphdr() {
         )
     );
 }
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct icmphdr {
+    pub type_: __u8,
+    pub code: __u8,
+    pub checksum: __sum16,
+    pub un: icmphdr__bindgen_ty_1,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union icmphdr__bindgen_ty_1 {
+    pub echo: icmphdr__bindgen_ty_1__bindgen_ty_1,
+    pub gateway: __be32,
+    pub frag: icmphdr__bindgen_ty_1__bindgen_ty_2,
+    pub reserved: [__u8; 4usize],
+    _bindgen_union_align: u32,
+}
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone)]
+pub struct icmphdr__bindgen_ty_1__bindgen_ty_1 {
+    pub id: __be16,
+    pub sequence: __be16,
+}
+#[test]
+fn bindgen_test_layout_icmphdr__bindgen_ty_1__bindgen_ty_1() {
+    assert_eq!(
+        ::core::mem::size_of::<icmphdr__bindgen_ty_1__bindgen_ty_1>(),
+        4usize,
+        concat!("Size of: ", stringify!(icmphdr__bindgen_ty_1__bindgen_ty_1))
+    );
+    assert_eq!(
+        ::core::mem::align_of::<icmphdr__bindgen_ty_1__bindgen_ty_1>(),
+        2usize,
+        concat!(
+            "Alignment of ",
+            stringify!(icmphdr__bindgen_ty_1__bindgen_ty_1)
+        )
+    );
+    assert_eq!(
+        unsafe {
+            &(*(::core::ptr::null::<icmphdr__bindgen_ty_1__bindgen_ty_1>())).id as *const _ as usize
+        },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(icmphdr__bindgen_ty_1__bindgen_ty_1),
+            "::",
+            stringify!(id)
+        )
+    );
+    assert_eq!(
+        unsafe {
+            &(*(::core::ptr::null::<icmphdr__bindgen_ty_1__bindgen_ty_1>())).sequence as *const _
+                as usize
+        },
+        2usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(icmphdr__bindgen_ty_1__bindgen_ty_1),
+            "::",
+            stringify!(sequence)
+        )
+    );
+}
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone)]
+pub struct icmphdr__bindgen_ty_1__bindgen_ty_2 {
+    pub __unused: __be16,
+    pub mtu: __be16,
+}
+#[test]
+fn bindgen_test_layout_icmphdr__bindgen_ty_1__bindgen_ty_2() {
+    assert_eq!(
+        ::core::mem::size_of::<icmphdr__bindgen_ty_1__bindgen_ty_2>(),
+        4usize,
+        concat!("Size of: ", stringify!(icmphdr__bindgen_ty_1__bindgen_ty_2))
+    );
+    assert_eq!(
+        ::core::mem::align_of::<icmphdr__bindgen_ty_1__bindgen_ty_2>(),
+        2usize,
+        concat!(
+            "Alignment of ",
+            stringify!(icmphdr__bindgen_ty_1__bindgen_ty_2)
+        )
+    );
+    assert_eq!(
+        unsafe {
+            &(*(::core::ptr::null::<icmphdr__bindgen_ty_1__bindgen_ty_2>())).__unused as *const _
+                as usize
+        },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(icmphdr__bindgen_ty_1__bindgen_ty_2),
+            "::",
+            stringify!(__unused)
+        )
+    );
+    assert_eq!(
+        unsafe {
+            &(*(::core::ptr::null::<icmphdr__bindgen_ty_1__bindgen_ty_2>())).mtu as *const _
+                as usize
+        },
+        2usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(icmphdr__bindgen_ty_1__bindgen_ty_2),
+            "::",
+            stringify!(mtu)
+        )
+    );
+}
+#[test]
+fn bindgen_test_layout_icmphdr__bindgen_ty_1() {
+    assert_eq!(
+        ::core::mem::size_of::<icmphdr__bindgen_ty_1>(),
+        4usize,
+        concat!("Size of: ", stringify!(icmphdr__bindgen_ty_1))
+    );
+    assert_eq!(
+        ::core::mem::align_of::<icmphdr__bindgen_ty_1>(),
+        4usize,
+        concat!("Alignment of ", stringify!(icmphdr__bindgen_ty_1))
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<icmphdr__bindgen_ty_1>())).echo as *const _ as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(icmphdr__bindgen_ty_1),
+            "::",
+            stringify!(echo)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<icmphdr__bindgen_ty_1>())).gateway as *const _ as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(icmphdr__bindgen_ty_1),
+            "::",
+            stringify!(gateway)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<icmphdr__bindgen_ty_1>())).frag as *const _ as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(icmphdr__bindgen_ty_1),
+            "::",
+            stringify!(frag)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<icmphdr__bindgen_ty_1>())).reserved as *const _ as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(icmphdr__bindgen_ty_1),
+            "::",
+            stringify!(reserved)
+        )
+    );
+}
+impl Default for icmphdr__bindgen_ty_1 {
+    fn default() -> Self {
+        unsafe { ::core::mem::zeroed() }
+    }
+}
+#[test]
+fn bindgen_test_layout_icmphdr() {
+    assert_eq!(
+        ::core::mem::size_of::<icmphdr>(),
+        8usize,
+        concat!("Size of: ", stringify!(icmphdr))
+    );
+    assert_eq!(
+        ::core::mem::align_of::<icmphdr>(),
+        4usize,
+        concat!("Alignment of ", stringify!(icmphdr))
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<icmphdr>())).type_ as *const _ as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(icmphdr),
+            "::",
+            stringify!(type_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<icmphdr>())).code as *const _ as usize },
+        1usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(icmphdr),
+            "::",
+            stringify!(code)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<icmphdr>())).checksum as *const _ as usize },
+        2usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(icmphdr),
+            "::",
+            stringify!(checksum)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<icmphdr>())).un as *const _ as usize },
+        4usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(icmphdr),
+            "::",
+            stringify!(un)
+        )
+    );
+}
+impl Default for icmphdr {
+    fn default() -> Self {
+        unsafe { ::core::mem::zeroed() }
+    }
+}
 extern "C" {
     pub fn nlmsg_data_non_inline(nlh: *mut nlmsghdr) -> *mut c_types::c_void;
 }
@@ -91282,6 +91510,9 @@ extern "C" {
 }
 extern "C" {
     pub fn udp_hdr_wrapped(skb: *const sk_buff) -> *mut udphdr;
+}
+extern "C" {
+    pub fn icmp_hdr_wrapped(skb: *const sk_buff) -> *mut icmphdr;
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]

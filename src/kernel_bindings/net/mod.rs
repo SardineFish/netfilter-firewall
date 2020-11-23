@@ -27,6 +27,7 @@ pub enum Port<T> {
 pub type UdpHeader = bindings::udphdr;
 pub type TcpHeader = bindings::tcphdr;
 pub type IPv4Header = bindings::iphdr;
+pub type IcmpHeader = bindings::icmphdr;
 pub type IPv4Packet<'a> = NetPacket<'a, IPv4Header>;
 pub type TcpPacket<'a> = NetPacket<'a, TcpHeader>;
 pub type UdpPacket<'a> = NetPacket<'a, UdpHeader>;
@@ -84,6 +85,15 @@ impl TcpHeader {
     }
 }
 
+impl IcmpHeader {
+    pub fn from_skbuff<'buff>(sk_buff: &'buff bindings::sk_buff) -> Option<&'buff IcmpHeader> {
+        unsafe {
+            let header_ptr = bindings::icmp_hdr_wrapped(sk_buff as *const bindings::sk_buff);
+            header_ptr.as_ref()
+        }
+    }
+}
+
 impl UdpHeader {
     pub fn from_skbuff<'buff>(sk_buff: &'buff bindings::sk_buff) -> Option<&'buff UdpHeader> {
         unsafe {
@@ -128,6 +138,8 @@ impl<'a> NetPacket<'a, UdpHeader> {
         }
     }
 }
+
+
 
 
 // impl From<&TcpHeader> for Port<u16> {

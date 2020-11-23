@@ -23,8 +23,8 @@ const INCLUDE_FUNC: &[&str] = &[
     "ip_hdr_wrapped",
     "tcp_hdr_wrapped",
     "skb_copy_bits",
-    "udp_hdr_wrapped"
-    
+    "udp_hdr_wrapped",
+    "icmp_hdr_wrapped",
 ];
 const INCLUDE_TYPE: &[&str] = &[
     "nlmsghdr",
@@ -37,7 +37,8 @@ const INCLUDE_TYPE: &[&str] = &[
     "iphdr",
     "tcphdr",
     "udphdr",
-    "IpProtocol"
+    "IpProtocol",
+    "icmphdr",
 ];
 const INCLUDE_VAL: &[&str] = &[
 ];
