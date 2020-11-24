@@ -1,12 +1,16 @@
 #![no_std]
 #![feature(panic_info_message)]
 #![feature(alloc_error_handler)]
+#![allow(warnings)]
 
 extern crate alloc;
 extern crate packet;
 
 mod kernel_bindings;
 mod firewall;
+mod utils;
+
+
 use kernel_bindings::bindings;
 use kernel_bindings::net;
 use kernel_bindings::netfilter;
@@ -27,8 +31,10 @@ fn init() -> i32 {
     println!("init module!");
     println!("1 + 1 = {}", 1 + 1);
 
+    firewall::init_firewall();
+
     unsafe {
-        let mut cfg = kernel_bindings::bindings::netlink_kernel_cfg {
+        let cfg = kernel_bindings::bindings::netlink_kernel_cfg {
             input: Some(input),
             ..Default::default()
         };
@@ -244,7 +250,11 @@ fn my_panic(_info: &core::panic::PanicInfo) -> ! {
     core::fmt::write(&mut writer, *_info.message().unwrap());
     printk::printk(writer.to_str());
     printk::printk("\n");
-    loop {}
+    
+    
+    loop {
+        core::sync::atomic::spin_loop_hint();
+    }
 }
 
 #[alloc_error_handler]
@@ -254,8 +264,10 @@ fn alloc_error(_layout: alloc::alloc::Layout) -> ! {
         _layout.size(),
         _layout.align()
     );
-
-    loop {}
+    
+    loop {
+        core::sync::atomic::spin_loop_hint();
+    }
 }
 
 #[global_allocator]

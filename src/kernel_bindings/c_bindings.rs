@@ -91514,6 +91514,9 @@ extern "C" {
 extern "C" {
     pub fn icmp_hdr_wrapped(skb: *const sk_buff) -> *mut icmphdr;
 }
+extern "C" {
+    pub fn bug();
+}
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct GFP {}

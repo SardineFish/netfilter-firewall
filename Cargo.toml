@@ -18,6 +18,7 @@ panic = "abort"
 
 [dependencies]
 concat-idents = "1.0.0"
+hashbrown = "0.9.1"
 proc-macros = { path = "proc-macros" }
 packet = { path = "./packet", default-features = false, features = ["no_std"] }
 

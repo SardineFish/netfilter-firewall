@@ -23,6 +23,8 @@ struct udphdr* udp_hdr_wrapped(const struct sk_buff* skb);
 
 struct icmphdr* icmp_hdr_wrapped(const struct sk_buff* skb);
 
+void bug(void);
+
 struct GFP
 {
     enum

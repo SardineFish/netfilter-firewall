@@ -83,6 +83,11 @@ unsigned int hook_func(void* priv, struct sk_buff* skb, const struct nf_hook_sta
     return NF_ACCEPT;
 }
 
+void bug(void)
+{
+    BUG();
+}
+
 static struct nf_hook_ops nfho;
 
 extern void extern_code(void)

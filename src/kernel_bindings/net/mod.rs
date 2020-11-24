@@ -24,6 +24,7 @@ pub enum Port<T> {
     None
 }
 
+pub type IpProtocol = u8;
 pub type UdpHeader = bindings::udphdr;
 pub type TcpHeader = bindings::tcphdr;
 pub type IPv4Header = bindings::iphdr;

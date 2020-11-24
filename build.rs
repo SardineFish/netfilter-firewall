@@ -25,6 +25,7 @@ const INCLUDE_FUNC: &[&str] = &[
     "skb_copy_bits",
     "udp_hdr_wrapped",
     "icmp_hdr_wrapped",
+    "bug"
 ];
 const INCLUDE_TYPE: &[&str] = &[
     "nlmsghdr",
