@@ -84,12 +84,12 @@ impl<T> nl_packet::NetlinkDeserializable<PacketMessage<T>> for PacketMessage<T> 
 
 pub fn main() {
 
-    // let addr = SocketAddr::new(5325, 1);
-    // let socket = Socket::new(16)
-    //     .expect("Failed to create netlink socket on protocol 16");
-    // socket
-    //     .connect(&addr)
-    //     .expect("Failed to connect to remote socket.");
+    let args:Vec<String> = std::env::args().collect();
+
+    println!("{:?}", args);
+    return;
+
+    
 
     let mut buffer: [u8; 1024] = [0; 1024];
     let rules = packets::FilterRule {
@@ -115,6 +115,8 @@ pub fn main() {
     netlink_msg.serialize(&mut buf);
 
     socket.send_to(&buf[..netlink_msg.buffer_len()], &addr, 0).unwrap();
+
+    
 
     
     loop {

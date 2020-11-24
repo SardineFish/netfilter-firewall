@@ -62,7 +62,7 @@ pub fn init_firewall() {
     }
 }
 
-pub fn add_rule(rule: GeneralFirewallRule, priority: usize) {
+pub fn add_rule(priority: usize, rule: GeneralFirewallRule) {
     unsafe {
         let rules = FIREWALL_RULES.as_mut().unwrap();
         rules.add_rule(rule, priority);

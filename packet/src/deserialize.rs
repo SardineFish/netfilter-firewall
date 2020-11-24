@@ -115,6 +115,14 @@ impl<'a> Deserializer<'a> {
             }
         }
     }
+    pub fn deserialize_vec<T>(&mut self, mut vec: alloc::vec::Vec<T>) -> DeserializeResult<alloc::vec::Vec<T>>  where T: Deserialize<T>
+    {
+        let len = self.deserialize_usize()?;
+        for i in 0..len {
+            vec.push(self.deserialize()?);
+        }
+        Ok(vec)
+    }
     pub fn deserialize_u8_array(&mut self) -> DeserializeResult<&'a [u8]> {
         let size = self.deserialize_usize()?;
         let buffer = self.reader.read(size);

@@ -18,9 +18,9 @@ pub struct IcmpEndpoint {
 
 #[derive(Default)]
 pub struct Endpoint {
-    ip: u32,
-    mask: u32,
-    port: u16,
+    pub ip: u32,
+    pub mask: u32,
+    pub port: u16,
 }
 
 #[derive(Eq, PartialEq)]
@@ -36,10 +36,10 @@ impl Default for RuleAction {
 }
 
 pub struct GeneralFirewallRule {
-    protocol: net::IpProtocol,
-    source: Endpoint,
-    dest: Endpoint,
-    action: RuleAction,
+    pub protocol: net::IpProtocol,
+    pub source: Endpoint,
+    pub dest: Endpoint,
+    pub action: RuleAction,
 }
 
 #[derive(Default)]
