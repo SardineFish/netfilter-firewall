@@ -150,12 +150,14 @@ module_version!("0.0.1");
 
 #[panic_handler]
 fn my_panic(_info: &core::panic::PanicInfo) -> ! {
-    println!("error");
+    println!("Error");
     let mut writer = printk::LogWriter::new();
     core::fmt::write(&mut writer, *_info.message().unwrap());
     printk::printk(writer.to_str());
     printk::printk("\n");
-    
+    if let Some(location) = _info.location() {
+        println!("Panic at {} line:{}", location.file(), location.line());
+    }
     
     loop {
         core::sync::atomic::spin_loop_hint();

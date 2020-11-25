@@ -62,6 +62,8 @@ pub struct FirewallRules {
     udp_rules: Vec<UdpRuleEntry>,
     icmp_rules: Vec<IcmpRuleEntry>,
     tcp_default: RuleAction,
+    udp_default: RuleAction,
+    icmp_default: RuleAction,
 }
 
 impl FirewallRules {
@@ -71,6 +73,8 @@ impl FirewallRules {
             udp_rules: vec![],
             icmp_rules: vec![],
             tcp_default: RuleAction::Permit,
+            udp_default: RuleAction::Permit,
+            icmp_default: RuleAction::Permit,
         }
     }
     pub fn permit_tcp(&self, iphdr: &net::IPv4Header, tcphdr: &net::TcpHeader) -> bool {
@@ -86,6 +90,32 @@ impl FirewallRules {
         }
 
         self.tcp_default == RuleAction::Permit
+    }
+    pub fn permit_udp(&self, iphdr: &net::IPv4Header, udphdr: &net::UdpHeader) -> bool {
+        for rule in &self.udp_rules {
+            let src_match = (iphdr.saddr & rule.source.mask) == (rule.source.ip & rule.source.mask);
+            let dst_match = (iphdr.daddr & rule.dest.mask) == (rule.dest.ip & rule.dest.mask);
+            let src_port_match = rule.source.port == 0 || (rule.source.port == udphdr.source);
+            let dst_port_match = rule.dest.port == 0 || (rule.dest.port == udphdr.dest);
+
+            if src_match && dst_match && src_port_match &&dst_port_match {
+                return rule.action == RuleAction::Permit;
+            }
+        }
+
+        self.udp_default == RuleAction::Permit
+    }
+    pub fn permit_icmp(&self, iphdr: &net::IPv4Header, icmphdr: &net::IcmpHeader) -> bool {
+        for rule in &self.icmp_rules {
+            let src_match = (iphdr.saddr & rule.source.mask) == (rule.source.ip & rule.source.mask);
+            let dst_match = (iphdr.daddr & rule.dest.mask) == (rule.dest.ip & rule.dest.mask);
+
+            if src_match && dst_match {
+                return rule.action == RuleAction::Permit;
+            }
+        }
+
+        self.icmp_default == RuleAction::Permit
     }
     pub fn add_rule(&mut self, mut rule: GeneralFirewallRule, mut priority: usize) {
         rule = handle_byte_order(rule);

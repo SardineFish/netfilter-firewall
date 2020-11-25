@@ -3,6 +3,7 @@ mod constants;
 use crate::kernel_bindings::bindings;
 pub use constants::ip_protocol;
 pub use constants::protocol_family;
+pub use constants::icmp_code;
 use core::mem::size_of;
 
 extern "C" {

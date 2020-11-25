@@ -80,3 +80,19 @@ pub mod protocol_family {
     pub const XDP: u8 = 44;
     pub const MAX: u8 = 45;
 }
+
+pub mod icmp_code {
+    pub const ICMP_ECHOREPLY: u8 = 0;
+    pub const ICMP_DEST_UNREACH: u8 = 3;
+    pub const ICMP_SOURCE_QUENCH: u8 = 4;
+    pub const ICMP_REDIRECT: u8 = 5;
+    pub const ICMP_ECHO: u8 = 8;
+    pub const ICMP_TIME_EXCEEDED: u8 = 11;
+    pub const ICMP_PARAMETERPROB: u8 = 12;
+    pub const ICMP_TIMESTAMP: u8 = 13;
+    pub const ICMP_TIMESTAMPREPLY: u8 = 14;
+    pub const ICMP_INFO_REQUEST: u8 = 15;
+    pub const ICMP_INFO_REPLY: u8 = 16;
+    pub const ICMP_ADDRESS: u8 = 17;
+    pub const ICMP_ADDRESSREPLY: u8 = 18;
+}
