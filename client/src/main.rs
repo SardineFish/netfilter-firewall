@@ -122,9 +122,12 @@ fn format_rule_header() -> String {
 }
 
 fn send_rule(args: &[String], action: FirewallAction) {
-    if args.len() < 3 {
+    if args.len() < 2 {
         println!("Invalid arguments.");
-        println!("Example: firewall allow TCP 127.0.0.1/32:0 192.168.0.0/24:80");
+        println!("Examples: ");
+        println!("    firewall allow TCP 127.0.0.1/32:0 192.168.0.0/24:80");
+        println!("    firewall deny UDP 0.0.0.0 8.8.8.8");
+        println!("    firewall deny ICMP default");
         std::process::exit(-1);
     }
 
@@ -138,6 +141,27 @@ fn send_rule(args: &[String], action: FirewallAction) {
             std::process::exit(-1);
         }
     };
+
+    if args[1].to_lowercase() == "default" {
+        let rule = FirewallRule {
+            source_ip: 0,
+            source_mask: 0,
+            source_port: 0,
+            dest_ip: 0,
+            dest_mask: 0,
+            dest_port: 0,
+            protocol: protocol,
+            action: action,
+            priority: 0,
+        };
+        send_msg(FirewallMessage::SetDefault(rule));
+        println!("Default rule set.");
+        std::process::exit(0);
+    }
+    else if args.len() < 3 {
+        println!("Invalid arguments.");
+        std::process::exit(-1);
+    }
 
     let (src_ip, src_mask, src_port) = parse_endpoint(args[1].as_str()).unwrap();
     let (dst_ip, dst_mask, dst_port) = parse_endpoint(args[2].as_str()).unwrap();
