@@ -69,6 +69,19 @@ pub fn add_rule(priority: usize, rule: GeneralFirewallRule) {
     }
 }
 
+pub fn set_default(rule: GeneralFirewallRule) {
+    unsafe {
+        let rules = FIREWALL_RULES.as_mut().unwrap();
+        rules.set_default(rule)
+    }
+}
+
+pub fn delete_rule(index: usize) -> Option<GeneralFirewallRule> {
+    unsafe {
+        FIREWALL_RULES.as_mut().unwrap().delete_rule(index)
+    }
+}
+
 pub fn list_rules() -> alloc::vec::Vec<GeneralFirewallRule> {
     let rules;
     unsafe {

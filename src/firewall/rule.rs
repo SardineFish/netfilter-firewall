@@ -4,13 +4,14 @@ use hashbrown::hash_map;
 use crate::kernel_bindings::net;
 use alloc::vec::{Vec};
 use alloc::vec;
+use core::convert::Into;
 
 enum Direction {
     Out = 0,
     In = 1,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct IcmpEndpoint {
     ip: u32,
     mask: u32,
@@ -42,14 +43,14 @@ pub struct GeneralFirewallRule {
     pub action: RuleAction,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct IcmpRuleEntry {
     source: IcmpEndpoint,
     dest: IcmpEndpoint,
     action: RuleAction,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct TcpRuleEntry {
     source: Endpoint,
     dest: Endpoint,
@@ -125,65 +126,51 @@ impl FirewallRules {
         }
 
         match rule.protocol {
-            net::ip_protocol::TCP => self.tcp_rules.insert(priority, TcpRuleEntry {
-                    source: rule.source,
-                    dest: rule.dest,
-                    action: rule.action,
-                }),
-            net::ip_protocol::UDP => self.udp_rules.insert(priority, UdpRuleEntry {
-                source: rule.source,
-                dest: rule.dest,
-                action: rule.action,
-            }),
-            net::ip_protocol::ICMP => self.icmp_rules.insert(priority, IcmpRuleEntry {
-                source: IcmpEndpoint {
-                    ip: rule.source.ip,
-                    mask: rule.source.mask,
-                },
-                dest: IcmpEndpoint {
-                    ip: rule.dest.ip,
-                    mask: rule.dest.mask,
-                },
-                action: rule.action,
-            }),
+            net::ip_protocol::TCP => self.tcp_rules.insert(priority, rule.into()),
+            net::ip_protocol::UDP => self.udp_rules.insert(priority, rule.into()),
+            net::ip_protocol::ICMP => self.icmp_rules.insert(priority, rule.into()),
             _=>(),
         }
     }
+
+    pub fn set_default(&mut self, mut rule: GeneralFirewallRule) {
+        rule = handle_byte_order(rule);
+
+        match rule.protocol {
+            net::ip_protocol::TCP => (self.tcp_default = rule.action),
+            net::ip_protocol::UDP => (self.udp_default = rule.action),
+            net::ip_protocol::ICMP => (self.icmp_default = rule.action),
+            _=>(),
+        }
+    }
+
+    pub fn delete_rule(&mut self, mut index: usize) -> Option<GeneralFirewallRule> {
+        if index < self.tcp_rules.len() {
+            return Some(self.tcp_rules.remove(index).into_tcp_rule());
+        }
+        index -= self.tcp_rules.len();
+        if index < self.udp_rules.len() {
+            return Some(self.udp_rules.remove(index).into_udp_rule());
+        }
+        index -= self.udp_rules.len();
+        if index < self.icmp_rules.len() {
+            return Some(self.icmp_rules.remove(index).into());
+        }
+        None
+    }
+
     pub fn list_rules(&self) -> Vec<GeneralFirewallRule> {
         let mut list = Vec::<GeneralFirewallRule>::with_capacity(
             self.tcp_rules.len() + self.udp_rules.len() + self.icmp_rules.len());
         
         for rule in &self.tcp_rules {
-            list.push(GeneralFirewallRule {
-                source: rule.source.clone().to_be(),
-                dest: rule.dest.clone().to_be(),
-                action: rule.action,
-                protocol: net::ip_protocol::TCP,
-            });
+            list.push(rule.clone().into_tcp_rule());
         }
         for rule in &self.udp_rules {
-            list.push(GeneralFirewallRule {
-                source: rule.source.clone().to_be(),
-                dest: rule.dest.clone().to_be(),
-                action: rule.action,
-                protocol: net::ip_protocol::UDP,
-            });
+            list.push(rule.clone().into_udp_rule());
         }
         for rule in &self.icmp_rules {
-            list.push(GeneralFirewallRule {
-                source: Endpoint {
-                    ip: rule.source.ip.to_be(),
-                    mask: rule.source.mask.to_be(),
-                    port: 0,
-                },
-                dest: Endpoint {
-                    ip: rule.dest.ip.to_be(),
-                    mask: rule.dest.mask.to_be(),
-                    port: 0,
-                },
-                action: rule.action,
-                protocol: net::ip_protocol::ICMP,
-            });
+            list.push(rule.clone().into());
         }
         list
     }
@@ -195,6 +182,81 @@ impl Endpoint {
             ip: self.ip.to_be(),
             mask: self.mask.to_be(),
             port: self.port.to_be(),
+        }
+    }
+}
+
+impl From<GeneralFirewallRule> for TcpRuleEntry {
+    fn from(mut rule: GeneralFirewallRule) -> Self {
+        rule = handle_byte_order(rule);
+
+        TcpRuleEntry {
+            source: rule.source,
+            dest: rule.dest,
+            action: rule.action,
+        }
+    }
+}
+
+
+impl From<TcpRuleEntry> for GeneralFirewallRule {
+    fn from(rule: TcpRuleEntry) -> Self {
+        GeneralFirewallRule {
+            source: rule.source.clone().to_be(),
+            dest: rule.dest.clone().to_be(),
+            action: rule.action,
+            protocol: net::ip_protocol::IP,
+        }
+    }
+}
+
+impl TcpRuleEntry {
+    fn into_tcp_rule(self) -> GeneralFirewallRule {
+        GeneralFirewallRule {
+            protocol: net::ip_protocol::TCP,
+            ..self.into()
+        }
+    }
+    fn into_udp_rule(self) -> GeneralFirewallRule {
+        GeneralFirewallRule {
+            protocol: net::ip_protocol::UDP,
+            ..self.into()
+        }
+    }
+}
+
+impl From<GeneralFirewallRule> for IcmpRuleEntry {
+    fn from(rule: GeneralFirewallRule) -> Self {
+        let rule = handle_byte_order(rule);
+        IcmpRuleEntry {
+            source: IcmpEndpoint {
+                ip: rule.source.ip,
+                mask: rule.source.mask,
+            },
+            dest: IcmpEndpoint {
+                ip: rule.dest.ip,
+                mask: rule.dest.mask,
+            },
+            action: rule.action,
+        }
+    }
+}
+
+impl From<IcmpRuleEntry> for GeneralFirewallRule {
+    fn from(rule: IcmpRuleEntry) -> Self {
+        GeneralFirewallRule {
+            source: Endpoint {
+                ip: rule.source.ip.to_be(),
+                mask: rule.source.mask.to_be(),
+                port: 0,
+            },
+            dest: Endpoint {
+                ip: rule.dest.ip.to_be(),
+                mask: rule.dest.mask.to_be(),
+                port: 0,
+            },
+            action: rule.action,
+            protocol: net::ip_protocol::ICMP,
         }
     }
 }

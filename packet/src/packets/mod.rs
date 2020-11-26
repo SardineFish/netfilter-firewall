@@ -236,6 +236,12 @@ mod test {
         assert_eq!(size, msg.eval_size());
         let deserialized_msg = deserialize::<FirewallMessage>(&buffer).unwrap();
         assert_eq!(msg, deserialized_msg);
+
+        let msg = FirewallMessage::DeleteRule(rng.gen());
+        let size = serialize::serialize(&msg, &mut buffer);
+        assert_eq!(size, msg.eval_size());
+        let deserialized_msg = deserialize::<FirewallMessage>(&buffer).unwrap();
+        assert_eq!(msg, deserialized_msg);
     }
 
 }

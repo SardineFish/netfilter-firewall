@@ -103,7 +103,48 @@ fn msg_callback(msg_recieved: &kernel_bindings::netlink::NetlinkMsgRaw) {
                 println!("Added rule into the firewall.");
             },
             packets::FirewallMessage::SetDefault(rule) => {
-                println!("Set default rule.");
+                firewall::set_default(firewall::GeneralFirewallRule {
+                    source: firewall::Endpoint{
+                        ip: rule.source_ip,
+                        mask: rule.source_mask,
+                        port: rule.source_port,
+                    },
+                    dest: firewall::Endpoint {
+                        ip: rule.dest_ip,
+                        mask: rule.dest_mask,
+                        port: rule.dest_port,
+                    },
+                    action: match rule.action {
+                        packets::FirewallAction::Allow => firewall::RuleAction::Permit,
+                        packets::FirewallAction::Deny => firewall::RuleAction::Drop,
+                    },
+                    protocol: rule.protocol,
+                });
+                println!("Default rule set.");
+            },
+            packets::FirewallMessage::DeleteRule(index) => {
+                println!("Delete rule at {}", index);
+                let msg;
+                if let Some(rule) = firewall::delete_rule(index) {
+                    msg = packets::FirewallMessage::SetRule(packets::FirewallRule {
+                        source_ip: rule.source.ip,
+                        source_mask: rule.source.mask,
+                        source_port: rule.source.port,
+                        dest_ip: rule.dest.ip,
+                        dest_mask: rule.dest.mask,
+                        dest_port: rule.dest.port,
+                        action: match rule.action {
+                            firewall::RuleAction::Permit => packets::FirewallAction::Allow,
+                            firewall::RuleAction::Drop => packets::FirewallAction::Deny,
+                        },
+                        protocol: rule.protocol,
+                        priority: index,
+                    });
+                }
+                else {
+                    msg = packets::FirewallMessage::Error;
+                }
+                send_msg(msg, msg_recieved.addr.pid);
             },
             packets::FirewallMessage::QueryRules => {
                 println!("Query rules list.");
@@ -126,18 +167,25 @@ fn msg_callback(msg_recieved: &kernel_bindings::netlink::NetlinkMsgRaw) {
                     });
                 }
                 let msg = packets::FirewallMessage::RuleList(rules);
-                println!("size: {}", msg.eval_size());
-                let mut buffer: alloc::vec::Vec<u8> = vec![0; msg.eval_size() + 64];
-                let size = serialize(&msg, &mut buffer);
-                let msg = netlink::NetlinkMsgRaw::new(&buffer[..size]);
-                socket.send(msg_recieved.addr.pid, msg);
-                println!("Send rule list with size {}", size);
+                send_msg(msg, msg_recieved.addr.pid);
             }
             _ => {
                 println!("Invalid message");
             }
         }
     }
+}
+
+fn send_msg(msg: packets::FirewallMessage, pid: u32) {
+    let socket;
+    unsafe {
+        socket = NETLINK_SOCKET.as_ref().unwrap();
+    }
+    let mut buffer: alloc::vec::Vec<u8> = vec![0; msg.eval_size() + 64];
+    let size = serialize(&msg, &mut buffer);
+    let msg = netlink::NetlinkMsgRaw::new(&buffer[..size]);
+    socket.send(pid, msg);
+    println!("Send {} bytes message to netlink pid {}", size, pid);
 }
 
 extern "C" fn input(buf: *mut bindings::sk_buff) {

@@ -18,25 +18,38 @@ fn list_rules() {
     let reply = socket.recv::<FirewallMessage>();
     match reply {
         FirewallMessage::RuleList(rules) => {
-            println!(
-                "Priority\t{}\t{:<16} {:<16} {:<12} {:<16} {:<16} {:<10} {}",
-                "Protocol",
-                "Src Ip",
-                "Src Mask",
-                "Src Port",
-                "Dest Ip",
-                "Dest Mask",
-                "Dest Port",
-                "Action"
-            );
+            println!("{}", format_rule_header());
             println!("----------------------------------------------------------------------------------------------------------------------------------");
             for (i, rule) in rules.iter().enumerate() {
-                println!("{}\t\t{}",i , format_rule(&rule));
+                println!("{:<6} {}",i , format_rule(&rule));
             }
         },
         _ => {
             println!("Invalid message from firewall kernel module.");
         }
+    }
+}
+
+fn delete_rule(args: &[String]) {
+    if args.len() <= 0 {
+        println!("Invalid argument.");
+        std::process::exit(-1);
+    }
+
+    let index = args[0].parse::<usize>().unwrap();
+    let msg = FirewallMessage::DeleteRule(index);
+    let socket = send_msg(msg);
+    let reply = socket.recv::<FirewallMessage>();
+    match reply {
+        FirewallMessage::SetRule(rule) => {
+            println!("Affected one rule:");
+            println!("{}", format_rule_header());
+            println!("{:<6} {}", rule.priority, format_rule(&rule));
+        },
+        FirewallMessage::Error => {
+            println!("Invalid index {}", index);
+        },
+        _ => println!("Invalid message from kernel."),
     }
 }
 
@@ -82,7 +95,7 @@ fn format_rule(rule: &FirewallRule) -> String {
         FirewallAction::Deny => "Deny",
     };
     format!(
-        "{}\t\t{:<16} {:<16} {:<12} {:<16} {:<16} {:<10} {}", 
+        "{:<10} {:<16} {:<16} {:<12} {:<16} {:<16} {:<10} {}", 
         protocol,
         ipv4_addr(rule.source_ip), 
         ipv4_addr(rule.source_mask),
@@ -92,6 +105,19 @@ fn format_rule(rule: &FirewallRule) -> String {
         rule.dest_port,
         action
     )
+}
+
+fn format_rule_header() -> String {
+    format!("{:<6} {:<10} {:<16} {:<16} {:<12} {:<16} {:<16} {:<10} {}",
+        "Index",
+        "Protocol",
+        "Src Ip",
+        "Src Mask",
+        "Src Port",
+        "Dest Ip",
+        "Dest Mask",
+        "Dest Port",
+        "Action")
 }
 
 fn send_rule(args: &[String], action: FirewallAction) {
@@ -151,6 +177,7 @@ pub fn main() {
         "ls" | "list" => list_rules(),
         "allow" => send_rule(&args[2..], FirewallAction::Allow),
         "deny" => send_rule(&args[2..], FirewallAction::Deny),
+        "delete" | "del" => delete_rule(&args[2..]),
         _ => {
             println!("Unknown command {}", command);
             std::process::exit(-1);

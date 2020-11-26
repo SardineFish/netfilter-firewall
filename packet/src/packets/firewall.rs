@@ -47,6 +47,7 @@ pub enum FirewallMessage {
     /* 2 */ SetDefault(FirewallRule),
     /* 3 */ SetRule(FirewallRule),
     /* 4 */ RuleList(Vec<FirewallRule>),
+    /* 5 */ DeleteRule(usize),
 }
 
 impl EvalSize for FirewallRule {
@@ -69,6 +70,7 @@ impl EvalSize for FirewallMessage {
             FirewallMessage::SetDefault(rule) | FirewallMessage::SetRule(rule) => (
                 size_of::<i32>() + rule.eval_size()
             ),
+            FirewallMessage::DeleteRule(_) => size_of::<i32>() + size_of::<usize>(),
         }
     }
 }
@@ -125,7 +127,8 @@ impl Serialize for FirewallMessage {
             FirewallMessage::QueryRules => serializer.serialize(&1),
             FirewallMessage::SetDefault(rule) => serializer.serialize(&2).serialize(rule),
             FirewallMessage::SetRule(rule) => serializer.serialize(&3).serialize(rule),
-            FirewallMessage::RuleList(rules) => serializer.serialize(&4).serialize(&&rules[..])
+            FirewallMessage::RuleList(rules) => serializer.serialize(&4).serialize(&&rules[..]),
+            FirewallMessage::DeleteRule(id) => serializer.serialize(&5).serialize(id),
         }
     }
 }
@@ -138,6 +141,7 @@ impl Deserialize<FirewallMessage> for FirewallMessage {
             2 => FirewallMessage::SetDefault(deserializer.deserialize()?),
             3 => FirewallMessage::SetRule(deserializer.deserialize()?),
             4 => FirewallMessage::RuleList(deserializer.deserialize_vec(vec![])?),
+            5 => FirewallMessage::DeleteRule(deserializer.deserialize()?),
             _ => FirewallMessage::Error,
         };
         Ok(msg)
