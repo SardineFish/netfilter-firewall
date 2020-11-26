@@ -2,6 +2,7 @@
 #![cfg_attr(feature = "no_std", no_std, feature(alloc_error_handler))]
 // #![feature(alloc)]
 // #![feature(lang_items)]
+#![allow(dead_code, unused_imports)]
 
 extern crate alloc;
 

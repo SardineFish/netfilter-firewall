@@ -46,7 +46,7 @@ pub enum DeserializeError {
 }
 
 pub struct Deserializer<'a> {
-    reader: &'a mut DataReader<'a>,
+    reader: &'a mut dyn DataReader<'a>,
 }
 
 macro_rules! impl_deserializer_fn {
@@ -90,7 +90,7 @@ macro_rules! impl_deserialize {
 impl_deserialize!(bool, i8, i16, i32, i64, u8, u16, u32, u64, isize, usize, f32, f64);
 
 impl<'a> Deserializer<'a> {
-    pub fn new(reader: &'a mut DataReader<'a>) -> Self {
+    pub fn new(reader: &'a mut dyn DataReader<'a>) -> Self {
         Deserializer {
             reader: reader
         }
@@ -118,7 +118,7 @@ impl<'a> Deserializer<'a> {
     pub fn deserialize_vec<T>(&mut self, mut vec: alloc::vec::Vec<T>) -> DeserializeResult<alloc::vec::Vec<T>>  where T: Deserialize<T>
     {
         let len = self.deserialize_usize()?;
-        for i in 0..len {
+        for _ in 0..len {
             vec.push(self.deserialize()?);
         }
         Ok(vec)
@@ -145,9 +145,7 @@ impl<'a> Deserializer<'a> {
         let buffer = self.deserialize_u8_array()?;
         match allocator(buffer.len()) {
             Some(string) if string.len() >= buffer.len() => {
-                unsafe {
-                    string[..buffer.len()].copy_from_slice(buffer);
-                }
+                string[..buffer.len()].copy_from_slice(buffer);
                 return Ok(core::str::from_utf8_mut(string).unwrap());
             },
             _ => Err(DeserializeError::AllocationFaild),

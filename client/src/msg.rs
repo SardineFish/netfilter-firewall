@@ -34,7 +34,7 @@ impl nl_packet::NetlinkSerializable<Message> for Message {
 
 impl nl_packet::NetlinkDeserializable<Message> for Message {
     type Error = nl_packet::DecodeError;
-    fn deserialize(header: &nl_packet::NetlinkHeader, payload: &[u8]) -> Result<Self, Self::Error> {
+    fn deserialize(_: &nl_packet::NetlinkHeader, payload: &[u8]) -> Result<Self, Self::Error> {
         Ok(Message {
             data: payload.to_vec(),
             size: payload.len(),
@@ -76,9 +76,9 @@ impl Socket {
     pub fn recv<T: packet::Deserialize<T>>(&self) -> T {
         let mut buf = vec![0; 65536];
 
-        let (size, addr) = self.socket.recv_from(&mut buf, 0).unwrap();
+        let (size, _) = self.socket.recv_from(&mut buf, 0).unwrap();
         {
-            let mut netlink_buf = nl_packet::NetlinkBuffer::new(&buf[..size]);
+            nl_packet::NetlinkBuffer::new(&buf[..size]);
         }
 
         let parsed = nl_packet::NetlinkMessage::<Message>::deserialize(&buf[..size]).unwrap();

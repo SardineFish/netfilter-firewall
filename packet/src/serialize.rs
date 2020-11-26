@@ -34,7 +34,7 @@ impl<'p> DataWriter<'p> for BinaryWriter<'p> {
 }
 
 pub struct Serializer<'w> {
-    writer: &'w mut DataWriter<'w>,
+    writer: &'w mut dyn DataWriter<'w>,
     length: usize,
 }
 

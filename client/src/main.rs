@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_imports, unused_variables)]
 
 extern crate packet;
 extern crate netlink_sys;
