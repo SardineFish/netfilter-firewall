@@ -18,7 +18,7 @@ use kernel_bindings::netlink;
 use kernel_bindings::printk;
 
 use alloc::*;
-use packet::{deserialize, packets, serialize};
+use packet::{deserialize, packets, serialize, EvalSize};
 
 static mut NETFILTER_HOOK: Option<netfilter::NetfilterHook> = None;
 static mut NETLINK_SOCKET: Option<netlink::NetLinkSock> = None;
@@ -72,6 +72,11 @@ fn msg_callback(msg_recieved: &kernel_bindings::netlink::NetlinkMsgRaw) {
         msg_recieved.addr.pid,
         msg_recieved.payload.len()
     );
+    
+    let socket;
+    unsafe {
+        socket = NETLINK_SOCKET.as_ref().unwrap();
+    }
 
     if let Ok(msg) = deserialize::<packets::FirewallMessage>(msg_recieved.payload) {
         match msg {
@@ -102,6 +107,31 @@ fn msg_callback(msg_recieved: &kernel_bindings::netlink::NetlinkMsgRaw) {
             },
             packets::FirewallMessage::QueryRules => {
                 println!("Query rules list.");
+                let list = firewall::list_rules();
+                let mut rules = alloc::vec::Vec::<packets::FirewallRule>::with_capacity(list.len());
+                for (i, rule) in list.iter().enumerate() {
+                    rules.push(packets::FirewallRule {
+                        source_ip: rule.source.ip,
+                        source_mask: rule.source.mask,
+                        source_port: rule.source.port,
+                        dest_ip: rule.dest.ip,
+                        dest_mask: rule.dest.mask,
+                        dest_port: rule.dest.port,
+                        action: match rule.action {
+                            firewall::RuleAction::Permit => packets::FirewallAction::Allow,
+                            firewall::RuleAction::Drop => packets::FirewallAction::Deny,
+                        },
+                        protocol: rule.protocol,
+                        priority: i,
+                    });
+                }
+                let msg = packets::FirewallMessage::RuleList(rules);
+                println!("size: {}", msg.eval_size());
+                let mut buffer: alloc::vec::Vec<u8> = vec![0; msg.eval_size() + 64];
+                let size = serialize(&msg, &mut buffer);
+                let msg = netlink::NetlinkMsgRaw::new(&buffer[..size]);
+                socket.send(msg_recieved.addr.pid, msg);
+                println!("Send rule list with size {}", size);
             }
             _ => {
                 println!("Invalid message");

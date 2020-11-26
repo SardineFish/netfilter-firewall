@@ -1,9 +1,14 @@
 use crate::deserialize::{Deserialize, DeserializeResult, Deserializer};
-use crate::serialize::{Serialize, Serializer};
+use crate::serialize::{Serialize, Serializer, EvalSize};
+
+mod firewall;
+
+pub use firewall::*;
 
 #[cfg(feature = "no_std")]
 use alloc::vec::Vec;
 use alloc::vec;
+use core::mem::size_of;
 
 #[derive(Debug, PartialEq, Default)]
 pub struct CapturedPacket {
@@ -26,52 +31,7 @@ pub struct FilterRule {
     pub protocol: u8,
 }
 
-#[derive(Debug, Eq, PartialEq, Copy, Clone)]
-pub enum FirewallAction {
-    Deny = 0,
-    Allow = 1,
-}
-impl  Default for FirewallAction {
-    fn default() -> Self {
-        FirewallAction::Allow
-    }
-}
-impl From<u8> for FirewallAction {
-    fn from(t: u8) -> Self {
-        match t {
-            0 => FirewallAction::Deny,
-            1 => FirewallAction::Allow,
-            _ => FirewallAction::Allow,
-        }
-    }
-}
 
-#[derive(Debug, PartialEq, Default)]
-pub struct FirewallRule {
-    pub source_ip: u32,
-    pub dest_ip: u32,
-    pub source_mask: u32,
-    pub dest_mask: u32,
-    pub source_port: u16,
-    pub dest_port: u16,
-    pub protocol: u8,
-    pub priority: usize,
-    pub action: FirewallAction,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct FirewallRuleList {
-    pub rules: Vec<FirewallRule>,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum FirewallMessage {
-    /* 0 */ Error, 
-    /* 1 */ QueryRules, 
-    /* 2 */ SetDefault(FirewallRule),
-    /* 3 */ SetRule(FirewallRule),
-    /* 4 */ RuleList(Vec<FirewallRule>),
-}
 
 impl Drop for CapturedPacket {
     fn drop(&mut self) {
@@ -87,6 +47,8 @@ impl CapturedPacket {
             + self.payload.len();
     }
 }
+
+
 
 impl Serialize for CapturedPacket {
     fn serialize<'s>(&self, serializer: Serializer<'s>) -> Serializer<'s> {
@@ -142,76 +104,7 @@ impl Deserialize<FilterRule> for FilterRule {
     }
 }
 
-impl Serialize for FirewallRule {
-    fn serialize<'s>(&self, serializer: Serializer<'s>) -> Serializer<'s> {
-        serializer
-            .serialize(&self.source_ip)
-            .serialize(&self.source_mask)
-            .serialize(&self.dest_ip)
-            .serialize(&self.dest_mask)
-            .serialize(&self.source_port)
-            .serialize(&self.dest_port)
-            .serialize(&self.protocol)
-            .serialize(&self.priority)
-            .serialize(&(self.action as u8))
-    }
-}
 
-impl Deserialize<FirewallRule> for FirewallRule {
-    fn deserialize<'a>(deserializer: &mut Deserializer<'a>) -> DeserializeResult<FirewallRule> {
-        Ok(FirewallRule {
-            source_ip: deserializer.deserialize_u32()?,
-            source_mask: deserializer.deserialize_u32()?,
-            dest_ip: deserializer.deserialize_u32()?,
-            dest_mask: deserializer.deserialize()?,
-            source_port: deserializer.deserialize()?,
-            dest_port: deserializer.deserialize()?,
-            protocol: deserializer.deserialize()?,
-            priority: deserializer.deserialize()?,
-            action: FirewallAction::from(deserializer.deserialize_u8()?),
-        })
-    }
-}
-
-impl Serialize for FirewallRuleList {
-    fn serialize<'s>(&self, serializer: Serializer<'s>) -> Serializer<'s> {
-        serializer.serialize(&&self.rules[..])
-    }
-}
-
-impl Deserialize<FirewallRuleList> for FirewallRuleList {
-    fn deserialize<'a>(deserializer: &mut Deserializer<'a>) -> DeserializeResult<FirewallRuleList> {
-        Ok(FirewallRuleList {
-            rules: deserializer.deserialize_vec(vec![])?
-        })
-    }
-}
-
-impl Serialize for FirewallMessage {
-    fn serialize<'s>(&self, serializer: Serializer<'s>) -> Serializer<'s> {
-        match self {
-            FirewallMessage::Error => serializer.serialize(&0),
-            FirewallMessage::QueryRules => serializer.serialize(&1),
-            FirewallMessage::SetDefault(rule) => serializer.serialize(&2).serialize(rule),
-            FirewallMessage::SetRule(rule) => serializer.serialize(&3).serialize(rule),
-            FirewallMessage::RuleList(rules) => serializer.serialize(&4).serialize(&&rules[..])
-        }
-    }
-}
-
-impl Deserialize<FirewallMessage> for FirewallMessage {
-    fn deserialize<'a>(deserializer: &mut Deserializer<'a>) -> DeserializeResult<FirewallMessage> {
-        let msg_type = deserializer.deserialize_i32()?;
-        let msg = match msg_type {
-            1 => FirewallMessage::QueryRules,
-            2 => FirewallMessage::SetDefault(deserializer.deserialize()?),
-            3 => FirewallMessage::SetRule(deserializer.deserialize()?),
-            4 => FirewallMessage::RuleList(deserializer.deserialize_vec(vec![])?),
-            _ => FirewallMessage::Error,
-        };
-        Ok(msg)
-    }
-}
 
 #[cfg(test)]
 mod test {
@@ -318,10 +211,11 @@ mod test {
         let msg = FirewallMessage::RuleList(rules);
 
         let mut buffer = [0; 8192];
-        serialize::serialize(&msg, &mut buffer);
+        let size =serialize::serialize(&msg, &mut buffer);
+        assert_eq!(size, msg.eval_size());
         let deserialized_msg = deserialize::deserialize::<FirewallMessage>(&buffer).unwrap();
-
         assert_eq!(deserialized_msg, msg);
+        
 
 
         let rule = rand_firewall_rule(&mut rng);
@@ -332,12 +226,14 @@ mod test {
 
         let rule = rand_firewall_rule(&mut rng);
         let msg = FirewallMessage::SetDefault(rule);
-        serialize::serialize(&msg, &mut buffer);
+        let size = serialize::serialize(&msg, &mut buffer);
+        assert_eq!(size, msg.eval_size());
         let deserialized_msg = deserialize::<FirewallMessage>(&buffer).unwrap();
         assert_eq!(msg, deserialized_msg);
 
         let msg = FirewallMessage::QueryRules;
-        serialize::serialize(&msg, &mut buffer);
+        let size = serialize::serialize(&msg, &mut buffer);
+        assert_eq!(size, msg.eval_size());
         let deserialized_msg = deserialize::<FirewallMessage>(&buffer).unwrap();
         assert_eq!(msg, deserialized_msg);
     }

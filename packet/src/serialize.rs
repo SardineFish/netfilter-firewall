@@ -11,6 +11,10 @@ pub trait DataWriter<'w> {
     fn write(&mut self, data: &[u8]) -> usize;
 }
 
+pub trait EvalSize {
+    fn eval_size(&self) -> usize;
+}
+
 impl<'p> BinaryWriter<'p> {
     pub fn from(ptr: &'p mut [u8]) -> Self {
         BinaryWriter {
@@ -67,6 +71,11 @@ macro_rules! impl_serialize {
                 }
             }
         }
+        impl EvalSize for $type {
+            fn eval_size(&self) -> usize {
+                core::mem::size_of::<$type>()
+            }
+        }
         impl_serialize!($($others), *);
     }
 }
@@ -85,10 +94,27 @@ impl<T: Serialize> Serialize for &[T]{
     }
 }
 
+impl<T: EvalSize> EvalSize for &[T] {
+    fn eval_size(&self) -> usize {
+        let mut size = core::mem::size_of::<usize>();
+        for item in *self {
+            size += item.eval_size();
+        }
+        size
+    }
+}
+
 impl Serialize for &str {
     fn serialize<'s>(&self, serializer: Serializer<'s>) -> Serializer<'s> {
         let slice = self.as_bytes();
         serializer.serialize(&slice)
+    }
+}
+
+impl EvalSize for &str {
+    fn eval_size(&self) -> usize {
+        let slice = self.as_bytes();
+        slice.eval_size()
     }
 }
 

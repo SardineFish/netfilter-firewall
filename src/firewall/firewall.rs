@@ -69,6 +69,14 @@ pub fn add_rule(priority: usize, rule: GeneralFirewallRule) {
     }
 }
 
+pub fn list_rules() -> alloc::vec::Vec<GeneralFirewallRule> {
+    let rules;
+    unsafe {
+        rules = FIREWALL_RULES.as_ref().unwrap();
+    }
+    rules.list_rules()
+}
+
 impl<T> Packet<T> {
     pub fn unwrap(self) -> T {
         match self {

@@ -13,7 +13,31 @@ use protocol::ip_protocol;
 use std::{fmt::Display, net};
 
 fn list_rules() {
-
+    let msg = FirewallMessage::QueryRules;
+    let socket = send_msg(msg);
+    let reply = socket.recv::<FirewallMessage>();
+    match reply {
+        FirewallMessage::RuleList(rules) => {
+            println!(
+                "Priority\t{}\t{:<16} {:<16} {:<12} {:<16} {:<16} {:<10} {}",
+                "Protocol",
+                "Src Ip",
+                "Src Mask",
+                "Src Port",
+                "Dest Ip",
+                "Dest Mask",
+                "Dest Port",
+                "Action"
+            );
+            println!("----------------------------------------------------------------------------------------------------------------------------------");
+            for (i, rule) in rules.iter().enumerate() {
+                println!("{}\t\t{}",i , format_rule(&rule));
+            }
+        },
+        _ => {
+            println!("Invalid message from firewall kernel module.");
+        }
+    }
 }
 
 fn parse_endpoint(endpoint: &str) -> Result<(u32, u32, u16), String> {
@@ -58,7 +82,7 @@ fn format_rule(rule: &FirewallRule) -> String {
         FirewallAction::Deny => "Deny",
     };
     format!(
-        "{}\t{:<16} {:<16} {:<5}\t\t{:<16} {:<16} {:<5}\t\t{}", 
+        "{}\t\t{:<16} {:<16} {:<12} {:<16} {:<16} {:<10} {}", 
         protocol,
         ipv4_addr(rule.source_ip), 
         ipv4_addr(rule.source_mask),
@@ -106,9 +130,10 @@ fn send_rule(args: &[String], action: FirewallAction) {
     println!("Rule added.");
 }
 
-fn send_msg(msg: FirewallMessage) {
+fn send_msg(msg: FirewallMessage) -> msg::Socket {
     let socket = msg::Socket::new(17);
     socket.send(0, 0, msg);
+    socket
 }
 
 pub fn main() {
@@ -121,11 +146,6 @@ pub fn main() {
     }
 
     let command = &args[1][..];
-
-    if command == "ls" || command == "list" {
-        println!("List firewall rules: ");
-        return;
-    }
 
     match command {
         "ls" | "list" => list_rules(),

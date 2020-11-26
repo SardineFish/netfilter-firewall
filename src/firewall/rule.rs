@@ -16,14 +16,14 @@ pub struct IcmpEndpoint {
     mask: u32,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Endpoint {
     pub ip: u32,
     pub mask: u32,
     pub port: u16,
 }
 
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Copy, Clone)]
 pub enum RuleAction {
     Permit,
     Drop,
@@ -148,6 +148,44 @@ impl FirewallRules {
             }),
             _=>(),
         }
+    }
+    pub fn list_rules(&self) -> Vec<GeneralFirewallRule> {
+        let mut list = Vec::<GeneralFirewallRule>::with_capacity(
+            self.tcp_rules.len() + self.udp_rules.len() + self.icmp_rules.len());
+        
+        for rule in &self.tcp_rules {
+            list.push(GeneralFirewallRule {
+                source: rule.source.clone().to_be(),
+                dest: rule.dest.clone().to_be(),
+                action: rule.action,
+                protocol: net::ip_protocol::TCP,
+            });
+        }
+        for rule in &self.udp_rules {
+            list.push(GeneralFirewallRule {
+                source: rule.source.clone().to_be(),
+                dest: rule.dest.clone().to_be(),
+                action: rule.action,
+                protocol: net::ip_protocol::UDP,
+            });
+        }
+        for rule in &self.icmp_rules {
+            list.push(GeneralFirewallRule {
+                source: Endpoint {
+                    ip: rule.source.ip.to_be(),
+                    mask: rule.source.mask.to_be(),
+                    port: 0,
+                },
+                dest: Endpoint {
+                    ip: rule.dest.ip.to_be(),
+                    mask: rule.dest.mask.to_be(),
+                    port: 0,
+                },
+                action: rule.action,
+                protocol: net::ip_protocol::ICMP,
+            });
+        }
+        list
     }
 }
 

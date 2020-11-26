@@ -29,7 +29,7 @@ impl NetLinkSock {
             bindings::netlink_kernel_release(self.sock);
         }
     }
-    pub fn send(&self, portid: u32, msg: &NetlinkMsgRaw) -> Result<(), SocketError> {
+    pub fn send(&self, portid: u32, msg: NetlinkMsgRaw) -> Result<(), SocketError> {
         unsafe {
             if let Some(sk_buff) = msg.to_sk_buf() {
                 let ptr = (&(*sk_buff).cb).as_ptr() as *mut bindings::netlink_skb_parms;

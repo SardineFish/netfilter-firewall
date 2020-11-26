@@ -13,7 +13,7 @@ pub mod serialize;
 mod test;
 
 pub use deserialize::{deserialize, Deserialize};
-pub use serialize::{serialize, Serialize};
+pub use serialize::{serialize, Serialize, EvalSize};
 
 // extern crate serde;
 
